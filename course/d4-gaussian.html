@@ -1,0 +1,30 @@
+<!doctype html><html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="../assets/css/style.css"><script>window.MathJax={tex:{inlineMath:[["$","$"],["\\(","\\)"]]}}</script><script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script><script src="../assets/js/viz.js"></script><style>.flow{display:flex;flex-wrap:wrap;gap:6px;align-items:center}.flow div{border:1px solid var(--ac);border-radius:8px;padding:6px 10px}.row{display:flex;flex-wrap:wrap;gap:12px}.row>*{flex:1;min-width:300px}pre{background:var(--card);padding:8px;overflow:auto;font-size:13px;border:1px solid var(--bd);border-radius:6px}.k{color:#d33}.p{color:#1a6fd4}.e{color:#1a9a4a}</style><title>D4 · DFT dengan Gaussian</title><link rel="icon" href="../assets/img/simonusa-logo.svg"><script src="../assets/js/shell.js"></script></head><body><h1>D4 · Praktik DFT dengan Gaussian</h1><nav><a href="../index.html">Dashboard</a><a href="../course.html">Course</a><a href="../molecular-builder.html">Molecular Builder</a><a href="../input-builder.html">Input Builder</a><a href="../results-analyzer.html">Results</a><a href="../orca-docker.html">ORCA Docker</a></nav>
+<div class="card"><h2>D4.1 Anatomi input Gaussian (.com / .gjf)</h2>
+<pre>%nprocshared=8                      # Link 0: sumber daya
+%mem=16GB
+%chk=mol.chk                        # checkpoint (untuk orbital/restart)
+#p B3LYP/6-31G(d) opt freq EmpiricalDispersion=GD3BJ scrf=(smd,solvent=water)
+
+judul pekerjaan                     # baris kosong sebelum dan sesudah judul
+
+0 1                                 # muatan dan multiplisitas
+ C  0.000  0.000  0.000
+ ...
+(baris kosong di akhir)</pre>
+<table><tr><th>Kebutuhan</th><th>Route section</th></tr><tr><td>Fungsional/basis</td><td><code>B3LYP/6-31G(d)</code>, <code>PBE1PBE/def2SVP</code>, <code>CAM-B3LYP/6-311+G(d,p)</code></td></tr><tr><td>Job</td><td><code>opt</code>, <code>freq</code>, <code>opt freq</code>, <code>opt=tight</code></td></tr><tr><td>Dispersi</td><td><code>EmpiricalDispersion=GD3BJ</code></td></tr><tr><td>Pelarut</td><td><code>scrf=(smd,solvent=water)</code></td></tr><tr><td>Grid yang lebih halus</td><td><code>int=ultrafine</code></td></tr><tr><td>SCF sulit</td><td><code>scf=xqc</code> atau <code>scf=(maxcycle=300)</code></td></tr><tr><td>TD-DFT</td><td><code>td(nstates=20)</code> (tambahkan <code>td=(nstates=20,root=1)</code> untuk optimasi keadaan tereksitasi)</td></tr></table></div>
+<div class="card"><h2>D4.2 Contoh TD-DFT dan konversi orbital</h2>
+<pre>%chk=dye.chk
+#p CAM-B3LYP/6-311+G(d,p) td(nstates=20) scrf=(smd,solvent=toluene)
+
+TD-DFT spektrum
+
+0 1
+(koordinat hasil optimasi)</pre>
+<pre>formchk dye.chk dye.fchk                         # chk → fchk
+cubegen 0 MO=Homo dye.fchk homo.cube 0 h        # cube HOMO
+cubegen 0 MO=Lumo dye.fchk lumo.cube 0 h        # cube LUMO</pre>
+<p>Keberhasilan: <code>Normal termination of Gaussian</code>; optimasi: <code>Optimization completed</code> dan <code>Stationary point found</code>. Frekuensi negatif pada blok <code>Frequencies --</code> berarti imajiner.</p>
+<p>Jalankan: <code>g16 &lt; job.com &gt; job.log</code> (atau <code>g16 job.com</code> yang menghasilkan <code>job.log</code>). Unggah <code>job.log</code> ke <a href="../results-analyzer.html">Results Analyzer</a>.</p></div>
+<div class="card"><h2>D4.3 Perbandingan cepat ORCA vs Gaussian</h2>
+<table><tr><th></th><th>ORCA</th><th>Gaussian</th></tr><tr><td>Format</td><td><code>.inp</code>, keyword <code>!</code>, blok <code>%</code></td><td><code>.com</code>, route <code>#p</code>, Link 0 <code>%</code></td></tr><tr><td>Keluaran</td><td><code>.out</code>, <code>.gbw</code></td><td><code>.log</code>, <code>.chk</code></td></tr><tr><td>Orbital untuk visual</td><td><code>orca_2mkl -molden</code> atau <code>orca_plot</code></td><td><code>formchk</code> + <code>cubegen</code></td></tr><tr><td>Lisensi</td><td>gratis akademik (daftar)</td><td>komersial</td></tr></table></div>
+<p><a href="d3-orca.html">← D3</a> · <a href="../course.html">Daftar bab</a> · <a href="d5-output-troubleshooting.html">D5 →</a></p></body></html>

@@ -1,0 +1,33 @@
+<!doctype html><html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="../assets/css/style.css"><script>window.MathJax={tex:{inlineMath:[["$","$"],["\\(","\\)"]]}}</script><script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script><script src="../assets/js/viz.js"></script><style>.flow{display:flex;flex-wrap:wrap;gap:6px;align-items:center}.flow div{border:1px solid var(--ac);border-radius:8px;padding:6px 10px}.row{display:flex;flex-wrap:wrap;gap:12px}.row>*{flex:1;min-width:300px}pre{background:var(--card);padding:8px;overflow:auto;font-size:13px;border:1px solid var(--bd);border-radius:6px}.k{color:#d33}.p{color:#1a6fd4}.e{color:#1a9a4a}</style><title>D3 · DFT dengan ORCA</title><link rel="icon" href="../assets/img/simonusa-logo.svg"><script src="../assets/js/shell.js"></script></head><body><h1>D3 · Praktik DFT dengan ORCA</h1><nav><a href="../index.html">Dashboard</a><a href="../course.html">Course</a><a href="../molecular-builder.html">Molecular Builder</a><a href="../input-builder.html">Input Builder</a><a href="../results-analyzer.html">Results</a><a href="../orca-docker.html">ORCA Docker</a></nav>
+<div class="card"><h2>D3.1 Anatomi input ORCA</h2>
+<pre>! B3LYP D3BJ def2-SVP Opt Freq CPCM(water) TightSCF   # baris keyword
+%pal nprocs 8 end                                     # jumlah core
+%maxcore 2000                                         # MB per core
+* xyz 0 1                                             # muatan, multiplisitas
+ C  0.000  0.000  0.000
+ ...
+*                                                     # atau: * xyzfile 0 1 mol.xyz</pre>
+<table><tr><th>Kebutuhan</th><th>Keyword / blok</th></tr><tr><td>Fungsional, basis</td><td><code>B3LYP</code>, <code>PBE0</code>, <code>CAM-B3LYP</code>, <code>wB97X-D3</code>; <code>def2-SVP</code>, <code>def2-TZVP</code></td></tr><tr><td>Dispersi</td><td><code>D3BJ</code></td></tr><tr><td>Pelarut implisit</td><td><code>CPCM(water)</code></td></tr><tr><td>Job</td><td><code>SP</code>, <code>Opt</code>, <code>Freq</code>, <code>Opt Freq</code>, <code>TightOpt</code></td></tr><tr><td>Percepat hibrida</td><td><code>RIJCOSX def2/J</code></td></tr><tr><td>SCF sulit</td><td><code>SlowConv</code>, <code>TightSCF</code>; blok <code>%scf MaxIter 300 end</code></td></tr><tr><td>TD-DFT</td><td><code>%tddft nroots 20 tda false end</code></td></tr></table></div>
+<div class="card"><h2>D3.2 Contoh kerja</h2><div class="row"><div><b>1 · Optimasi + frekuensi</b><pre>! B3LYP D3BJ def2-SVP Opt Freq TightSCF
+%pal nprocs 8 end
+%maxcore 2000
+* xyzfile 0 1 mol.xyz</pre></div><div><b>2 · TD-DFT (struktur sudah optimasi)</b><pre>! CAM-B3LYP def2-TZVP CPCM(toluene) RIJCOSX def2/J TightSCF
+%pal nprocs 8 end
+%maxcore 2000
+%tddft nroots 20
+ tda false
+end
+* xyzfile 0 1 opt.xyz</pre></div></div>
+<p>Jalankan: <code>orca job.inp &gt; job.out</code>. ORCA paralel harus dipanggil dengan <b>path lengkap</b>: <code>$(which orca) job.inp &gt; job.out</code>.</p>
+<b>Skrip SLURM (sesuaikan modul/partisi cluster Anda)</b><pre>#!/bin/bash
+#SBATCH -J orca_job
+#SBATCH -N 1
+#SBATCH -n 8
+#SBATCH -o slurm-%j.log
+module load orca            # nama modul tergantung cluster
+cd $SLURM_SUBMIT_DIR
+$(which orca) job.inp &gt; job.out</pre></div>
+<div class="card"><h2>D3.3 Berkas hasil dan cara memakainya</h2>
+<table><tr><th>Berkas</th><th>Isi / langkah lanjut</th></tr><tr><td><code>job.out</code></td><td>output utama → unggah ke <a href="../results-analyzer.html">Results Analyzer</a></td></tr><tr><td><code>job.xyz</code></td><td>geometri akhir (untuk Freq/TD-DFT berikutnya)</td></tr><tr><td><code>job.gbw</code></td><td>orbital biner; <code>orca_2mkl job -molden</code> → <code>job.molden.input</code></td></tr><tr><td>orbital 3D</td><td><code>orca_plot job.gbw -i</code> (menu interaktif untuk membuat cube)</td></tr><tr><td><code>job.hess</code></td><td>Hessian untuk restart frekuensi</td></tr></table>
+<p>Keberhasilan: <code>****ORCA TERMINATED NORMALLY****</code> di akhir output, ditambah <code>THE OPTIMIZATION HAS CONVERGED</code> pada optimasi.</p></div>
+<p><a href="d2-fungsional.html">← D2</a> · <a href="../course.html">Daftar bab</a> · <a href="d4-gaussian.html">D4 →</a></p></body></html>

@@ -1,0 +1,52 @@
+<!doctype html><html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Results Analyzer | CompChem Lab</title><link rel="stylesheet" href="assets/css/style.css">
+<script>window.MathJax={tex:{inlineMath:[["$","$"]]}}</script><script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script><script src="https://3Dmol.org/build/3Dmol-min.js"></script>
+<style>#toc{position:sticky;top:0;background:var(--bg);padding:6px 0;border-bottom:1px solid var(--bd);z-index:5;font-size:14px}#toc a{margin-right:10px}.row{display:flex;flex-wrap:wrap;gap:12px}.row>*{flex:1;min-width:300px}.tw{overflow-x:auto}small{color:#888}.up{max-width:230px}</style><link rel="icon" href="assets/img/simonusa-logo.svg"><script src="assets/js/shell.js"></script></head><body>
+<h1>Computational Results Analyzer</h1>
+<nav><a href="index.html">Dashboard</a><a href="course.html">Course</a><a href="molecular-builder.html">Molecular Builder</a><a href="input-builder.html">Input Builder</a><a href="results-analyzer.html">Results</a><a href="orca-docker.html">ORCA Docker</a></nav>
+<div id="toc"><a href="#s0">Unggah</a><a href="#s1">Metode</a><a href="#s2">Galeri 3D</a><a href="#s3">Struktur</a><a href="#s4">Frekuensi</a><a href="#s5">Elektrokimia</a><a href="#s6">Optik</a><a href="#s7">Fotovoltaik</a></div>
+
+<div class="card" id="s0"><h2>0 · Unggah data (multi-molekul)</h2>
+<p>Isi <b>Nama molekul</b> lalu unggah berkasnya; semua berkas dengan nama yang sama digabung ke satu molekul. Kosongkan nama untuk memakai nama berkas. Semua pemrosesan terjadi di browser Anda.</p>
+Nama molekul <input id="mn" placeholder="mis. Dye-1" size="14"> <span id="chips"></span>
+<div class="row"><div>Output ORCA/Gaussian (.out/.log) atau 2 kolom λ,f (.txt)<br><input type="file" class="up" data-r="out" multiple></div><div>Struktur .xyz (opsional)<br><input type="file" class="up" data-r="xyz" multiple></div><div>HOMO (.cube atau gambar)<br><input type="file" class="up" data-r="ch" multiple></div><div>LUMO (.cube atau gambar)<br><input type="file" class="up" data-r="cl" multiple></div><div>UV-Vis eksperimen (λ, A)<br><input type="file" class="up" data-r="ex" multiple></div><div>J-V eksperimen (V, J)<br><input type="file" class="up" data-r="jv" multiple></div></div>
+<small>Orbital: ubah gbw → molden/cube dengan <code>orca_plot</code>; Gaussian: <code>formchk</code> + <code>cubegen</code> (lihat Course D3–D4). Berkas molden belum dibaca langsung.</small></div>
+
+<div class="card" id="s1"><h2>1 · Rincian metode (pembuat paragraf)</h2>
+Program <select id="m1"><option>Gaussian 16</option><option>ORCA 5</option><option>ORCA 6</option></select> Fungsional <input id="m2" value="B3LYP-D3BJ" size="12"> Basis <input id="m3" value="6-31G(d,p)" size="10"> Pelarut <input id="m4" value="CH₂Cl₂ (CPCM)" size="14"> TD-DFT: fungsional <input id="m5" value="CAM-B3LYP" size="10"> state <input id="m6" value="20" size="3">
+<p id="m7"></p><script>const mm=()=>{const v=i=>document.getElementById('m'+i).value;document.getElementById('m7').textContent=`Optimasi geometri dan perhitungan frekuensi dilakukan dengan ${v(1)} pada level ${v(2)}/${v(3)} dalam pelarut ${v(4)}; keadaan stasioner dikonfirmasi tanpa frekuensi imajiner. Eksitasi vertikal dihitung dengan TD-DFT (${v(5)}/${v(3)}, ${v(6)} state singlet) pada geometri keadaan dasar; spektrum diperoleh dengan pelebaran Gaussian.`};[1,2,3,4,5,6].forEach(i=>document.getElementById('m'+i).oninput=mm);mm()</script></div>
+
+<div class="card" id="s2"><h2>2 · Galeri struktur 3D</h2><div class="row" id="gal"></div></div>
+
+<div class="card" id="s3"><h2>3 · Properti struktural</h2>
+<p>Definisikan ukuran yang dilaporkan (indeks atom 1-berbasis, sama untuk semua molekul): <code>bond label i j</code>, <code>angle label i j k</code>, <code>dihedral label i j k l</code>.</p>
+<textarea id="ms" rows="4">bond d1 1 2
+angle a1 1 2 3
+dihedral θ1 1 2 3 4</textarea>
+<div class="tw"><table id="tstr"></table></div><button onclick="csv('tstr','struktur.csv')">Unduh CSV</button><br><small>Planaritas = RMSD atom berat terhadap bidang terbaik (&lt;0,05 Å planar, &lt;0,25 Å semi-planar; ambang heuristik). Jarak π–π stacking membutuhkan dimer dan tidak dihitung dari satu molekul.</small></div>
+
+<div class="card" id="s4"><h2>4 · Frekuensi vibrasi</h2><div class="tw"><table id="tfr"></table></div><button onclick="csv('tfr','frekuensi.csv')">Unduh CSV</button></div>
+
+<div class="card" id="s5"><h2>5 · Sifat elektrokimia dan orbital frontier</h2>
+$$IP=-E_{HOMO},\ \ EA=-E_{LUMO},\ \ E_{gap}=E_{LUMO}-E_{HOMO},\ \ \chi=\tfrac{IP+EA}{2},\ \ \eta=\tfrac{IP-EA}{2},\ \ S=\tfrac1\eta,\ \ \omega=\tfrac{\chi^2}{2\eta}$$
+<p>Aproksimasi Koopmans (energi orbital Kohn–Sham); nilai absolut bergantung fungsional.</p>
+Molekul untuk orbital 3D: <select id="sel"></select> isoval <input type="range" id="iso" min=".005" max=".1" step=".005" value=".03"> <b id="isov"></b>
+<div class="row"><div><b>HOMO</b><div class="v" id="vh"></div></div><div><b>LUMO</b><div class="v" id="vl"></div></div></div>
+<h3>Diagram tingkat energi</h3>E<sub>CB</sub>(TiO₂) <input type="number" id="cb" value="-4.0" step=".05" style="width:70px"> eV, E<sub>redox</sub> <input type="number" id="rx" value="-4.8" step=".05" style="width:70px"> eV (nilai umum DSSC, sesuaikan dengan referensi Anda)<canvas id="c_lad" width="760" height="360"></canvas>
+<div class="tw"><table id="tel"></table></div><button onclick="csv('tel','elektrokimia.csv')">Unduh CSV</button><br><small>ΔG<sub>inj</sub> dan ΔG<sub>reg</sub> positif menunjukkan gaya dorong injeksi elektron ke TiO₂ dan regenerasi dye (aturan praktis ≈0,2–0,3 eV).</small></div>
+
+<div class="card" id="s6"><h2>6 · Sifat optik: spektrum, LHE, dan tabel TD-DFT</h2>
+$$\mathrm{LHE}(\lambda)=1-10^{-A(\lambda)}=1-10^{-f}$$
+σ pita (eV) <input type="range" id="sig" min=".05" max=".8" step=".01" value=".25"> <b id="sgv"></b> <label><input type="checkbox" id="nm" checked> normalisasi</label>
+<div class="row"><div><b>Spektrum simulasi</b><canvas id="c_sim" width="760" height="300"></canvas></div><div><b>Simulasi vs eksperimen (molekul terpilih di bagian 5)</b><canvas id="c_cmp" width="760" height="300"></canvas></div></div>
+<b>LHE</b> (F(λ)=Σ f<sub>n</sub>·Gaussian, ditampilkan sebagai 1−10<sup>−F</sup>)<canvas id="c_lhe" width="760" height="300"></canvas>
+<div class="tw"><table id="tex"></table></div><button onclick="csv('tex','tddft.csv')">Unduh CSV</button></div>
+
+<div class="card" id="s7"><h2>7 · Kinerja fotovoltaik (J–V)</h2>
+$$FF=\frac{V_{mp}J_{mp}}{V_{oc}J_{sc}},\qquad PCE(\%)=\frac{J_{sc}V_{oc}FF}{P_{in}}\times100$$
+<p>Parameter simulasi dituner manual (AM1.5G tidak dibundel, jadi J<sub>sc</sub> tidak dihitung dari integral). Kurva simulasi memakai bentuk diode eksponensial yang disesuaikan dengan V<sub>oc</sub>, J<sub>sc</sub>, FF. Parameter eksperimen dihitung dari data J–V yang diunggah.</p>
+P<sub>in</sub> (mW/cm²) <input type="number" id="pin" value="100" style="width:70px"> ΔV<sub>shift</sub> <input type="number" id="dv" value="0" step=".05" style="width:70px"> V <button onclick="fillVoc()">Isi V<sub>oc</sub> = (E<sub>LUMO</sub>−E<sub>CB</sub>)/e + ΔV</button> <small>(rumus empiris seperti pada dashboard referensi Anda; periksa kesesuaiannya untuk sistem Anda)</small>
+<div class="tw"><table id="pvin"></table></div>
+<div class="row"><div><b>J–V simulasi</b><canvas id="c_jvs" width="760" height="300"></canvas></div><div><b>J–V eksperimen</b><canvas id="c_jve" width="760" height="300"></canvas></div></div>
+<div class="tw"><table id="tpv"></table></div><button onclick="csv('tpv','pv.csv')">Unduh CSV</button></div>
+<p>Hasil docking ORCA: lihat <a href="orca-docker.html">ORCA Docker Workbench</a>.</p>
+<script src="assets/js/viz.js"></script><script src="assets/js/parsers.js"></script><script src="assets/js/dashboard.js"></script></body></html>

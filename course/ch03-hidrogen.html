@@ -1,0 +1,41 @@
+<!doctype html><html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="../assets/css/style.css"><script>window.MathJax={tex:{inlineMath:[["$","$"],["\\(","\\)"]]}}</script><script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script><script src="../assets/js/viz.js"></script><style>.flow{display:flex;flex-wrap:wrap;gap:6px;align-items:center}.flow div{border:1px solid var(--ac);border-radius:8px;padding:6px 10px}.row{display:flex;flex-wrap:wrap;gap:12px}.row>*{flex:1;min-width:300px}.tag{font-size:12px;padding:1px 6px;border-radius:8px;background:#1a9a4a;color:#fff}.k{color:#d33}.p{color:#1a6fd4}.e{color:#1a9a4a}</style><title>Bab 3 · Atom hidrogen</title><link rel="icon" href="../assets/img/simonusa-logo.svg"><script src="../assets/js/shell.js"></script></head><body><h1>Bab 3 · Atom Hidrogen dan Orbital</h1><nav><a href="../index.html">Dashboard</a><a href="../course.html">Course</a><a href="../molecular-builder.html">Molecular Builder</a><a href="../input-builder.html">Input Builder</a><a href="../results-analyzer.html">Results</a><a href="../orca-docker.html">ORCA Docker</a></nav>
+<div class="card"><h2>3.1 Satu-satunya atom yang bisa diselesaikan eksak</h2>
+<p>Satu elektron dalam potensial Coulomb inti (satuan atom):</p>
+$$\left[-\tfrac12\nabla^2-\tfrac{1}{r}\right]\psi_{nlm}(r,\theta,\varphi)=E_n\psi_{nlm},\qquad \psi_{nlm}=R_{nl}(r)\,Y_l^m(\theta,\varphi),\qquad E_n=-\frac{13{,}606\ \text{eV}}{n^2}$$
+<ul><li><b>n</b> = 1,2,3… menentukan energi dan ukuran (kulit). <b>l</b> = 0…n−1 menentukan bentuk (s,p,d,f). <b>m</b> = −l…+l menentukan orientasi.</li>
+<li>Jumlah node radial = n−l−1; jumlah node total = n−1.</li>
+<li>Energi hanya bergantung n pada atom satu elektron (degenerasi). Pada atom banyak elektron degenerasi l pecah karena tolakan elektron.</li></ul></div>
+
+<div class="card"><h2>3.2 Tingkat energi dan garis spektrum</h2>
+$$\frac1\lambda=R_H\left(\frac1{n_1^2}-\frac1{n_2^2}\right)\quad(\lambda\ \text{nm}\approx 91{,}18\,/\,(1/n_1^2-1/n_2^2))$$
+<p>Animasi: elektron turun dari tingkat n₂ ke n₁ dan memancarkan foton; garis yang sudah muncul terkumpul di strip spektrum tampak (Balmer). Garis Lyman berada di UV dan Paschen di IR.</p><canvas id="c_e" width="760" height="340"></canvas></div>
+
+<div class="card"><h2>3.3 Peluang radial</h2><p>$P(r)=r^2R_{nl}(r)^2$: peluang menemukan elektron pada jarak r (kulit tipis). Perhatikan node (nol) dan puncak yang makin jauh untuk n besar.</p>
+<span id="orbs"></span> rentang r: <input type="range" id="rmax" min="5" max="40" value="20"><canvas id="c_h" width="760" height="270"></canvas><p id="t_h"></p></div>
+
+<div class="card"><h2>3.4 Awan orbital: setiap titik adalah satu pengukuran</h2><p>Irisan bidang x–z. Merah dan biru = tanda (fase) fungsi gelombang; di batas fase ada node. Orbital p bukan "angka delapan" yang tegas: itu rapat peluang.</p>
+Orbital <select id="ob"><option value="1s">1s</option><option value="2s">2s</option><option value="2pz">2p_z</option><option value="2px">2p_x</option></select><canvas id="c_o" width="420" height="420"></canvas></div>
+<p><a href="ch02-schrodinger.html">← Bab 2</a> · <a href="../course.html">Daftar bab</a> · <a href="ch04-hartree-fock-scf.html">Bab 4: Hartree–Fock dan SCF →</a></p>
+<script>
+const RN={'1s':r=>2*Math.exp(-r),'2s':r=>(2-r)*Math.exp(-r/2)/(2*Math.SQRT2),'2p':r=>r*Math.exp(-r/2)/(2*Math.sqrt(6)),'3s':r=>2/(81*Math.sqrt(3))*(27-18*r+2*r*r)*Math.exp(-r/3),'3p':r=>8/(27*Math.sqrt(6))*r*(1-r/6)*Math.exp(-r/3),'3d':r=>4/(81*Math.sqrt(30))*r*r*Math.exp(-r/3)};
+$('orbs').innerHTML=Object.keys(RN).map((n,i)=>`<label><input type="checkbox" class="orb" value="${n}" ${i<3?'checked':''}> ${n}</label> `).join('');
+function vH(){const sel=[...document.querySelectorAll('.orb:checked')].map(e=>e.value),r=lin(0,+$('rmax').value,500);plot('c_h',sel.map(n=>({n,x:r,y:r.map(v=>v*v*RN[n](v)**2)})),{xl:'r (bohr)',yl:'P(r)',y0:0});$('t_h').textContent=sel.map(n=>n+': '+(+n[0]-1-'spd'.indexOf(n[1]))+' node radial, E='+(-13.606/(n[0]*n[0])).toFixed(2)+' eV').join(' · ')}
+document.querySelectorAll('.orb').forEach(e=>e.onchange=vH);$('rmax').oninput=vH;vH();
+// spektrum
+const TR=[[3,2],[4,2],[5,2],[6,2],[2,1],[3,1],[4,3]],SN={1:'Lyman (UV)',2:'Balmer',3:'Paschen (IR)'};
+function rgb(l){let r=0,g=0,b=0;if(l<380||l>750)return'#888';if(l<440){r=(440-l)/60;b=1}else if(l<490){g=(l-440)/50;b=1}else if(l<510){g=1;b=(510-l)/20}else if(l<580){r=(l-510)/70;g=1}else if(l<645){r=1;g=(645-l)/65}else r=1;return`rgb(${r*255|0},${g*255|0},${b*255|0})`}
+const wl=(a,b)=>91.18/(1/(a*a)-1/(b*b));
+loop('c_e',t=>{const g=ctx('c_e'),fg=getComputedStyle(document.body).color,Y=n=>20+(1-(-13.606/(n*n))/-13.606)*0+(-13.606/(n*n)+13.606)/13.606*260,k=Math.floor(t/3),p=(t%3)/3,[n2,n1]=TR[k%TR.length];g.clearRect(0,0,760,340);g.font='13px system-ui';g.fillStyle=fg;g.strokeStyle=fg;g.lineWidth=2;
+ for(let n=1;n<=6;n++){const y=20+(1-(13.606/(n*n))/13.606)*0;g.beginPath();g.moveTo(60,Yn(n));g.lineTo(200,Yn(n));g.stroke();g.fillText('n='+n+'  '+(-13.606/(n*n)).toFixed(2)+' eV',205,Yn(n)+4)}
+ function Yn(n){return 290-(1-1/(n*n))*266}
+ let ey=p<.4?Yn(n2):p<.7?Yn(n2)+(Yn(n1)-Yn(n2))*(p-.4)/.3:Yn(n1);g.fillStyle='#d33';g.beginPath();g.arc(130,ey,7,0,7);g.fill();
+ const L=wl(n1,n2);if(p>=.7){const x=210+(p-.7)/.3*160;g.strokeStyle=rgb(L)==='#888'?'#888':rgb(L);g.beginPath();for(let i=0;i<60;i++){const xx=x-i*2;i?g.lineTo(xx,Yn(n1)-30+Math.sin(i*.8)*6):g.moveTo(xx,Yn(n1)-30)}g.stroke()}
+ g.fillStyle=fg;g.fillText('n='+n2+' → n='+n1+' : λ = '+L.toFixed(1)+' nm  ['+SN[n1]+']',420,30);
+ g.fillText('Garis Balmer tampak yang sudah muncul:',420,70);g.fillStyle='#222';g.fillRect(420,80,300,30);TR.slice(0,Math.min(k,TR.length)).forEach(([a,b])=>{if(a==2){const w=wl(a,b);if(w>380&&w<750){g.fillStyle=rgb(w);g.fillRect(420+(w-380)/370*300-1,80,3,30)}}});g.fillStyle=fg;g.fillText('380 nm',420,126);g.fillText('750 nm',680,126);
+ TR.slice(0,Math.min(k,TR.length)).forEach(([a,b],i)=>g.fillText(b+'→'+a+': '+wl(a,b).toFixed(1)+' nm',420,160+i*18))});
+// awan orbital
+const fr=Math.PI;const D={'1s':(x,z)=>{const r=Math.hypot(x,z);return[Math.exp(-2*r),1]},'2s':(x,z)=>{const r=Math.hypot(x,z);return[(2-r)**2*Math.exp(-r),Math.sign(2-r)]},'2pz':(x,z)=>{const r=Math.hypot(x,z);return[z*z*Math.exp(-r),Math.sign(z)]},'2px':(x,z)=>{const r=Math.hypot(x,z);return[x*x*Math.exp(-r),Math.sign(x)]}};
+let mx={},cur='',R=12;for(const k in D){let m=0;for(let x=-R;x<R;x+=.2)for(let z=-R;z<R;z+=.2)m=Math.max(m,D[k](x,z)[0]);mx[k]=m}
+let N=0;loop('c_o',t=>{const g=ctx('c_o'),k=$('ob').value;if(k!==cur||N>9000){g.clearRect(0,0,420,420);g.strokeStyle='#888';g.beginPath();g.moveTo(210,0);g.lineTo(210,420);g.moveTo(0,210);g.lineTo(420,210);g.stroke();cur=k;N=0}
+ for(let i=0;i<40;i++){const x=(Math.random()*2-1)*R,z=(Math.random()*2-1)*R,[d,s]=D[k](x,z);if(Math.random()*mx[k]<d){g.fillStyle=s>0?'rgba(220,50,50,.7)':'rgba(30,110,220,.7)';g.fillRect(210+x/R*210,210-z/R*210,2,2);N++}}});
+</script></body></html>

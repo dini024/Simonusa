@@ -1,0 +1,32 @@
+<!doctype html><html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Literatur | CompChem Lab</title><link rel="stylesheet" href="assets/css/style.css"><style>.tag{font-size:12px;padding:1px 6px;border-radius:8px;background:#1a9a4a;color:#fff}.tag.u{background:#b8860b}</style><link rel="icon" href="assets/img/simonusa-logo.svg"><script src="assets/js/shell.js"></script></head><body>
+<h1>Literatur Pendukung</h1>
+<nav><a href="index.html">Dashboard</a><a href="course.html">Course</a><a href="molecular-builder.html">Molecular Builder</a><a href="input-builder.html">Input Builder</a><a href="results-analyzer.html">Results</a><a href="orca-docker.html">ORCA Docker</a></nav>
+<div class="card"><p><span class="tag">terverifikasi</span> = judul/DOI dicek lewat pencarian web. <span class="tag u">cek ulang</span> = ditulis dari pengetahuan; periksa DOI dan detail sebelum dikutip. Gambar dari paper tidak disalin (hak cipta): buka lewat DOI.</p>
+Cari: <input id="q" size="30" placeholder="mis. DSSC, zeolit, TD-DFT"> Topik: <select id="t"><option value="">semua</option></select>
+<table id="tb"><tr><th>Topik</th><th>Referensi</th><th>Status</th></tr></table></div>
+<script>
+const R=[
+['Peran simulasi','Gómez-Bombarelli, R. et al. Design of efficient molecular organic light-emitting diodes by a high-throughput virtual screening and experimental approach. Nature Materials 15, 1120 (2016).','10.1038/nmat4717',1],
+['Peran simulasi','Lejaeghere, K. et al. Reproducibility in density functional theory calculations of solids. Science 351, aad3000 (2016).','10.1126/science.aad3000',1],
+['Peran simulasi','Levine, D. S. et al. The Open Molecules 2025 (OMol25) Dataset, Evaluations, and Models. arXiv:2505.08762 (2025).','',1,'https://arxiv.org/abs/2505.08762'],
+['Peran simulasi','Nørskov, J. K.; Bligaard, T.; Rossmeisl, J.; Christensen, C. H. Towards the computational design of solid catalysts. Nature Chemistry 1, 37 (2009).','10.1038/nchem.121',0],
+['Teori DFT','Hohenberg, P.; Kohn, W. Inhomogeneous Electron Gas. Phys. Rev. 136, B864 (1964).','10.1103/PhysRev.136.B864',1],
+['Teori DFT','Kohn, W.; Sham, L. J. Self-Consistent Equations Including Exchange and Correlation Effects. Phys. Rev. 140, A1133 (1965).','10.1103/PhysRev.140.A1133',1],
+['Teori DFT','Jones, R. O. Density functional theory: its origins, rise to prominence, and future. Rev. Mod. Phys. 87, 897 (2015).','10.1103/RevModPhys.87.897',1],
+['Teori DFT','Becke, A. D. Perspective: Fifty years of density-functional theory in chemical physics. J. Chem. Phys. 140, 18A301 (2014).','10.1063/1.4869598',1],
+['Teori DFT','Neese, F. The ORCA program system. WIREs Comput. Mol. Sci. 12, e1606 (2022).','10.1002/wcms.1606',1],
+['Teori DFT','Grimme, S.; Antony, J.; Ehrlich, S.; Krieg, H. A consistent and accurate ab initio parametrization of density functional dispersion correction (DFT-D). J. Chem. Phys. 132, 154104 (2010).','10.1063/1.3382344',0],
+['Teori DFT','Weigend, F.; Ahlrichs, R. Balanced basis sets of split valence, triple zeta valence and quadruple zeta valence quality for H to Rn. Phys. Chem. Chem. Phys. 7, 3297 (2005).','10.1039/B508541A',0],
+['TD-DFT','Laurent, A. D.; Jacquemin, D. TD-DFT benchmarks: a review. Int. J. Quantum Chem. 113, 2019 (2013).','10.1002/qua.24438',0],
+['TD-DFT','Runge, E.; Gross, E. K. U. Density-Functional Theory for Time-Dependent Systems. Phys. Rev. Lett. 52, 997 (1984).','10.1103/PhysRevLett.52.997',0],
+['DSSC','O’Regan, B.; Grätzel, M. A low-cost, high-efficiency solar cell based on dye-sensitized colloidal TiO2 films. Nature 353, 737 (1991).','10.1038/353737a0',1],
+['DSSC','Hagfeldt, A.; Boschloo, G.; Sun, L.; Kloo, L.; Pettersson, H. Dye-Sensitized Solar Cells. Chem. Rev. 110, 6595 (2010).','10.1021/cr900356p',0],
+['DSSC','Mathew, S. et al. Dye-sensitized solar cells with 13% efficiency achieved through the molecular engineering of porphyrin sensitizers. Nature Chemistry 6, 242 (2014).','10.1038/nchem.1861',0],
+['Simulasi H₂/zeolit','Dubbeldam, D.; Calero, S.; Ellis, D. E.; Snurr, R. Q. RASPA: molecular simulation software for adsorption and diffusion in flexible nanoporous materials. Molecular Simulation (2016).','10.1080/08927022.2015.1010082',1],
+['Simulasi H₂/zeolit','Deeg, K. S. et al. Insights on the Molecular Mechanisms of Hydrogen Adsorption in Zeolites. J. Phys. Chem. C (2013). (judul dan DOI terverifikasi; daftar penulis dan halaman cek ulang)','10.1021/jp4037233',0],
+['Fotokromik / azobenzena','Bandara, H. M. D.; Burdette, S. C. Photoisomerization in different classes of azobenzene. Chem. Soc. Rev. 41, 1809 (2012).','10.1039/C1CS15179G',0]];
+const T=[...new Set(R.map(r=>r[0]))];document.getElementById('t').innerHTML+=T.map(t=>`<option>${t}</option>`).join('');
+const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;');
+function draw(){const q=document.getElementById('q').value.toLowerCase(),t=document.getElementById('t').value;document.getElementById('tb').innerHTML='<tr><th>Topik</th><th>Referensi</th><th>Status</th></tr>'+R.filter(r=>(!t||r[0]==t)&&(r[0]+r[1]).toLowerCase().includes(q)).map(r=>`<tr><td>${r[0]}</td><td>${esc(r[1])} <a href="${r[4]||'https://doi.org/'+r[2]}" target="_blank" rel="noopener">${r[4]?'arXiv':'DOI'}</a></td><td><span class="tag ${r[3]?'':'u'}">${r[3]?'terverifikasi':'cek ulang'}</span></td></tr>`).join('')}
+document.getElementById('q').oninput=document.getElementById('t').onchange=draw;draw();
+</script></body></html>

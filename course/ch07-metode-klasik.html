@@ -1,0 +1,30 @@
+<!doctype html><html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="../assets/css/style.css"><script>window.MathJax={tex:{inlineMath:[["$","$"],["\\(","\\)"]]}}</script><script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script><script src="../assets/js/viz.js"></script><script src="../assets/js/sim.js"></script><style>.flow{display:flex;flex-wrap:wrap;gap:6px;align-items:center}.flow div{border:1px solid var(--ac);border-radius:8px;padding:6px 10px}.row{display:flex;flex-wrap:wrap;gap:12px}.row>*{flex:1;min-width:300px}.k{color:#d33}.p{color:#1a6fd4}.e{color:#1a9a4a}</style><title>Bab 7 · Metode klasik</title><link rel="icon" href="../assets/img/simonusa-logo.svg"><script src="../assets/js/shell.js"></script></head><body><h1>Bab 7 · Force Field, Dinamika Molekul, dan Monte Carlo</h1><nav><a href="../index.html">Dashboard</a><a href="../course.html">Course</a><a href="../molecular-builder.html">Molecular Builder</a><a href="../input-builder.html">Input Builder</a><a href="../results-analyzer.html">Results</a><a href="../orca-docker.html">ORCA Docker</a></nav>
+<div class="card"><h2>7.1 Force field: atom sebagai bola dan pegas</h2>
+$$E=\sum_{bond}k_b(r-r_0)^2+\sum_{angle}k_\theta(\theta-\theta_0)^2+\sum_{dih}\tfrac{V_n}2[1+\cos(n\phi-\delta)]+\sum_{i\lt j}\Big\{4\varepsilon\Big[\Big(\tfrac\sigma r\Big)^{12}-\Big(\tfrac\sigma r\Big)^{6}\Big]+\tfrac{q_iq_j}{4\pi\varepsilon_0r}\Big\}$$
+<p>Tidak ada elektron: murah, tetapi tidak bisa memutus atau membentuk ikatan (kecuali ReaxFF) dan bergantung parameter.</p>
+ε: <input type="range" id="ep" min=".5" max="2" step=".1" value="1"> σ: <input type="range" id="sg" min=".8" max="1.5" step=".05" value="1"> <canvas id="c_l" width="760" height="230"></canvas></div>
+<div class="card"><h2>7.2 Dinamika molekul (simulasi hidup, 49 partikel Lennard-Jones 2D)</h2>
+$$m\ddot{\mathbf r}_i=-\nabla_iE,\qquad \mathbf v_{n+1/2}=\mathbf v_n+\tfrac{\Delta t}{2m}\mathbf F_n,\ \ \mathbf r_{n+1}=\mathbf r_n+\Delta t\,\mathbf v_{n+1/2}\ \ (\text{velocity Verlet})$$
+<p>Gerakkan T: padat teratur (T rendah) mencair (T tinggi). Termostat sederhana mengatur suhu. Kanan: energi kinetik, potensial, dan total. Tanpa termostat, energi total hampir konstan.</p>
+T target (reduksi): <input type="range" id="T" min="0" max="2" step=".05" value=".3"> <b id="Tv"></b> <button onclick="mk()">Reset</button>
+<div class="row"><canvas id="c_md" width="380" height="380"></canvas><canvas id="c_en" width="480" height="380"></canvas></div></div>
+<div class="card"><h2>7.3 Monte Carlo grand-kanonik (GCMC): adsorpsi pada kisi</h2>
+$$P_{ins}=\min\Big[1,e^{-(\Delta E-\mu)/k_BT}\Big],\qquad P_{del}=\min\Big[1,e^{-(\Delta E+\mu)/k_BT}\Big]$$
+<p>Metode untuk adsorpsi gas pada pori (mis. H₂ pada zeolit/biochar): molekul disisipkan atau dihapus acak dengan aturan Metropolis. Kisi 30×30; ε = energi ikat, J = interaksi antar tetangga. Untuk J=0 hasilnya harus mengikuti Langmuir: $\theta=1/(1+e^{-(\mu+\varepsilon)/k_BT})$. Naikkan J: muncul kondensasi (lompatan tajam).</p>
+μ: <input type="range" id="mu" min="-6" max="3" step=".1" value="-1"> <b id="muv"></b> ε: <input type="range" id="ee" min="0" max="2" step=".1" value=".5"> J: <input type="range" id="jj" min="0" max="2" step=".1" value="0"> kT: <input type="range" id="kt" min=".4" max="2" step=".1" value="1"> <button onclick="addPt()">Catat titik isoterm</button> <button onclick="PT=[]">Hapus titik</button>
+<div class="row"><canvas id="c_g" width="360" height="360"></canvas><canvas id="c_i" width="500" height="360"></canvas></div><p id="t_g"></p></div>
+<div class="card"><h2>7.4 Kapan memakai yang mana?</h2><ul><li>Struktur/energi/spektrum molekul kecil → DFT. Konformer banyak atau ribuan atom → xTB atau force field.</li><li>Difusi, pelipatan, larutan (waktu) → MD. Adsorpsi kesetimbangan, isoterm → GCMC (RASPA).</li><li>Multiskala: QM/MM menggabungkan situs reaktif (QM) dan lingkungan (MM).</li></ul></div>
+<p><a href="ch06-basis-set.html">← Bab 6</a> · <a href="../course.html">Daftar bab</a> · <a href="ch08-pes-frekuensi.html">Bab 8 →</a></p>
+<script>
+function vL(){const e=+$('ep').value,s=+$('sg').value,r=lin(.85*s,2.5*s,300);plot('c_l',[{n:'4ε[(σ/r)¹²−(σ/r)⁶]',x:r,y:r.map(v=>4*e*((s/v)**12-(s/v)**6))},{n:'tarikan r⁻⁶ (dispersi)',x:r,y:r.map(v=>-4*e*(s/v)**6),d:1},{n:'tolakan r⁻¹² (Pauli)',x:r,y:r.map(v=>4*e*(s/v)**12),d:1,c:'#888'}],{xl:'r',yl:'E',y0:-2.5*e,y1:4*e});}
+$('ep').oninput=$('sg').oninput=vL;vL();
+let M,EH=[];function mk(){M=MD(49,8.4,.3);EH=[]}mk();
+loop('c_md',t=>{const Tt=+$('T').value;$('Tv').textContent=Tt;for(let i=0;i<8;i++)M.step(.004,Tt>0?Tt:0);const g=ctx('c_md'),k=380/M.L;g.clearRect(0,0,380,380);M.x.forEach((x,i)=>{g.fillStyle='#1a6fd4';g.beginPath();g.arc(x*k,M.y[i]*k,.5*k,0,7);g.fill()});EH.push([M.ke(),M.pe(),M.ke()+M.pe()]);if(EH.length>300)EH.shift();const xs=EH.map((_,i)=>i);
+ plot('c_en',[{n:'cinetik',x:xs,y:EH.map(e=>e[0])},{n:'potensial',x:xs,y:EH.map(e=>e[1])},{n:'total',x:xs,y:EH.map(e=>e[2]),c:'#1a9a4a'}],{xl:'langkah (×8)',yl:'energi (reduksi)'})});
+const LT=Lattice(30);let PT=[],hist=[],acc=0,na=0;
+function addPt(){PT.push([+$('mu').value,avg()])}function avg(){const h=hist.slice(-80);return h.reduce((a,b)=>a+b,0)/Math.max(1,h.length)}
+loop('c_g',t=>{const mu=+$('mu').value,e=+$('ee').value,J=+$('jj').value,kT=+$('kt').value;$('muv').textContent=mu;let th=0;for(let i=0;i<2;i++)th=LT.sweep(mu,e,J,kT);hist.push(th);if(hist.length>400)hist.shift();
+ const g=ctx('c_g'),c=12;g.clearRect(0,0,360,360);for(let i=0;i<900;i++){g.fillStyle=LT.g[i]?'#d33':'rgba(128,128,128,.15)';g.fillRect((i%30)*c+1,((i/30)|0)*c+1,c-2,c-2)}
+ const ms=lin(-6,3,100);plot('c_i',[{n:'Langmuir (J=0)',x:ms,y:ms.map(m=>1/(1+Math.exp(-(m+e)/kT))),d:1,c:'#888'},{n:'GCMC (titik tercatat)',x:PT.length?PT.map(p=>p[0]):[-6],y:PT.length?PT.map(p=>p[1]):[0]}],{xl:'μ',yl:'θ (cakupan)',y0:0,y1:1}).dot(mu,avg(),'#d33');
+ $('t_g').textContent='θ sekarang ≈ '+avg().toFixed(3)+(J==0?' · Langmuir: '+(1/(1+Math.exp(-(mu+e)/kT))).toFixed(3):'')});
+</script></body></html>

@@ -1,0 +1,10 @@
+(function(){const K=localStorage.cc_lang||'id';document.documentElement.lang=K;
+const deep=location.pathname.includes('/course/'),B=deep?'../':'';
+const N=[['index.html','Dashboard','Dashboard'],['course.html','Kursus','Course'],['molecular-builder.html','Molecular Builder','Molecular Builder'],['input-builder.html','Input Builder','Input Builder'],['results-analyzer.html','Hasil','Results'],['orca-docker.html','ORCA Docker','ORCA Docker'],['literatur.html','Literatur','Literature']];
+document.addEventListener('DOMContentLoaded',()=>{const here=location.pathname.split('/').pop()||'index.html',cur=deep?'course.html':here;
+ document.querySelectorAll('nav').forEach(n=>n.remove());
+ const h=document.createElement('header');h.className='site';h.innerHTML=`<a class="brand" href="${B}index.html"><img src="${B}assets/img/simonusa-logo.svg" alt="Simonusa"><span><b>Simonusa</b><small lang="id">Laboratorium Kimia Komputasi</small><small lang="en">Computational Chemistry Lab</small></span></a><nav>${N.map(n=>`<a href="${B}${n[0]}" class="${n[0]==cur?'on':''}"><span lang="id">${n[1]}</span><span lang="en">${n[2]}</span></a>`).join('')}</nav><div class="lang"><button data-l="id" class="${K=='id'?'on':''}">ID</button><button data-l="en" class="${K=='en'?'on':''}">EN</button></div>`;
+ document.body.prepend(h);h.querySelector('.lang').onclick=e=>{const l=e.target.dataset.l;if(l&&l!=K){localStorage.cc_lang=l;location.reload()}};
+ document.title=document.title.replace(/CompChem Lab|Computational Chemistry Lab/,'Simonusa');if(!/Simonusa/.test(document.title))document.title+=' | Simonusa';
+ if(K=='en'&&!document.querySelector('body [lang="en"]:not(header *)')){const d=document.createElement('div');d.className='banner';d.textContent='The English version of this page is in progress; the content below is shown in Indonesian. Interface elements are already bilingual.';h.after(d)}
+});})();

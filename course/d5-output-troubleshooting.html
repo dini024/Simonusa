@@ -1,0 +1,26 @@
+<!doctype html><html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="../assets/css/style.css"><script>window.MathJax={tex:{inlineMath:[["$","$"],["\\(","\\)"]]}}</script><script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script><script src="../assets/js/viz.js"></script><style>.flow{display:flex;flex-wrap:wrap;gap:6px;align-items:center}.flow div{border:1px solid var(--ac);border-radius:8px;padding:6px 10px}.row{display:flex;flex-wrap:wrap;gap:12px}.row>*{flex:1;min-width:300px}pre{background:var(--card);padding:8px;overflow:auto;font-size:13px;border:1px solid var(--bd);border-radius:6px}.k{color:#d33}.p{color:#1a6fd4}.e{color:#1a9a4a}</style><title>D5 · Output dan troubleshooting</title><link rel="icon" href="../assets/img/simonusa-logo.svg"><script src="../assets/js/shell.js"></script></head><body><h1>D5 · Membaca Output, Kalkulator Energi, dan Troubleshooting</h1><nav><a href="../index.html">Dashboard</a><a href="../course.html">Course</a><a href="../molecular-builder.html">Molecular Builder</a><a href="../input-builder.html">Input Builder</a><a href="../results-analyzer.html">Results</a><a href="../orca-docker.html">ORCA Docker</a></nav>
+<div class="card"><h2>D5.1 Daftar periksa setiap perhitungan</h2>
+<table><tr><th>Cek</th><th>ORCA</th><th>Gaussian</th></tr><tr><td>Selesai normal</td><td><code>ORCA TERMINATED NORMALLY</code></td><td><code>Normal termination</code></td></tr><tr><td>SCF konvergen</td><td>tidak ada <code>SCF NOT CONVERGED</code></td><td>tidak ada <code>Convergence failure</code></td></tr><tr><td>Optimasi konvergen</td><td><code>THE OPTIMIZATION HAS CONVERGED</code></td><td><code>Optimization completed</code></td></tr><tr><td>Frekuensi</td><td>blok <code>VIBRATIONAL FREQUENCIES</code> tanpa nilai negatif</td><td><code>Frequencies --</code> tanpa negatif</td></tr><tr><td>Kontaminasi spin (open-shell)</td><td>⟨S²⟩ ≈ S(S+1)</td><td><code>S**2</code> mendekati S(S+1)</td></tr><tr><td>TD-DFT</td><td>blok <code>ABSORPTION SPECTRUM</code></td><td><code>Excited State</code></td></tr></table></div>
+<div class="card"><h2>D5.2 Kalkulator energi reaksi dan konversi</h2>
+<p>Masukkan energi bebas Gibbs (Eh) per baris: reaktan dan produk (jumlah stoikiometri sudah dikalikan).</p>
+<div class="row"><div>Reaktan (Eh)<textarea id="re" rows="3">-232.123456
+-76.400000</textarea></div><div>Produk (Eh)<textarea id="pr" rows="3">-308.540000</textarea></div></div>T (K): <input type="number" id="T" value="298.15" style="width:80px"><div id="t_e"></div></div>
+<div class="card"><h2>D5.3 Bobot Boltzmann antar konformer</h2><p>Energi bebas relatif (kcal/mol), satu per baris:</p><textarea id="cf" rows="4">0.0
+0.5
+1.2
+2.8</textarea><div id="t_cf"></div></div>
+<div class="card"><h2>D5.4 Troubleshooting</h2>
+<table><tr><th>Gejala</th><th>Kemungkinan penyebab</th><th>Tindakan</th></tr>
+<tr><td>SCF tidak konvergen</td><td>tebakan awal buruk, spin salah, struktur tidak wajar, HOMO–LUMO sangat kecil</td><td>cek geometri dan multiplisitas; ORCA <code>SlowConv</code>; Gaussian <code>scf=xqc</code>; mulai dari basis kecil lalu baca orbitalnya</td></tr>
+<tr><td>Optimasi tidak konvergen</td><td>PES datar/ rotasi bebas, grid kasar</td><td>perbanyak siklus; <code>int=ultrafine</code>; mulai dari struktur pra-optimasi (xTB/MMFF)</td></tr>
+<tr><td>Frekuensi imajiner kecil (&lt;50 cm⁻¹)</td><td>mode rotasi metil/gugus longgar, grid kasar</td><td>optimasi ketat dengan grid halus; geser sepanjang mode dan optimasi ulang</td></tr>
+<tr><td>Imajiner besar</td><td>titik pelana</td><td>ikuti mode imajiner (geser, optimasi ulang); jika target TS, periksa mode dan IRC</td></tr>
+<tr><td>Spektrum TD-DFT tidak cocok</td><td>fungsional, pelarut, geometri keadaan dasar, vibronik</td><td>coba CAM-B3LYP/ωB97X-D; sertakan pelarut; bandingkan pola, bukan angka tunggal</td></tr>
+<tr><td>Memori/CPU habis</td><td>basis besar, nproc/maxcore tidak sesuai</td><td>turunkan basis; pastikan <code>nprocs × maxcore</code> &lt; memori node</td></tr></table></div>
+<p><a href="d4-gaussian.html">← D4</a> · <a href="../course.html">Daftar bab</a> · <a href="d6-tddft.html">D6 →</a></p>
+<script>
+const EH=627.5095,KJ=2625.4996,EV=27.211386,sum=id=>$(id).value.split('\n').map(Number).filter(v=>!isNaN(v)&&v!==0).reduce((a,b)=>a+b,0);
+function calc(){const d=sum('pr')-sum('re'),T=+$('T').value,RT=.0019872*T,K=Math.exp(-d*EH/RT);$('t_e').innerHTML=`<table><tr><td>ΔE</td><td>${d.toFixed(6)} Eh</td></tr><tr><td>kcal/mol</td><td>${(d*EH).toFixed(2)}</td></tr><tr><td>kJ/mol</td><td>${(d*KJ).toFixed(2)}</td></tr><tr><td>eV</td><td>${(d*EV).toFixed(3)}</td></tr><tr><td>K<sub>eq</sub> pada ${T} K</td><td>${K.toExponential(2)}</td></tr></table>`}
+function bz(){const e=$('cf').value.split('\n').map(Number).filter(v=>!isNaN(v)),RT=.0019872*+$('T').value,w=e.map(v=>Math.exp(-(v-Math.min(...e))/RT)),Z=w.reduce((a,b)=>a+b,0);$('t_cf').innerHTML='<table><tr><th>#</th><th>ΔG (kcal/mol)</th><th>bobot</th></tr>'+e.map((v,i)=>`<tr><td>${i+1}</td><td>${v}</td><td>${(100*w[i]/Z).toFixed(1)}%</td></tr>`).join('')+'</table>'}
+['re','pr','T','cf'].forEach(i=>$(i).oninput=()=>{calc();bz()});calc();bz();
+</script></body></html>
