@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width,initial-scale=1" name="viewport"/><link href="../assets/css/style.css" rel="stylesheet"/><script>window.MathJax={tex:{inlineMath:[["$","$"],["\\(","\\)"]]}}</script><script async="" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script><script src="../assets/js/viz.js"></script><style>.flow{display:flex;flex-wrap:wrap;gap:6px;align-items:center}.flow div{border:1px solid var(--ac);border-radius:8px;padding:6px 10px}.row{display:flex;flex-wrap:wrap;gap:12px}.row>*{flex:1;min-width:300px}pre{background:var(--card);padding:8px;overflow:auto;font-size:13px;border:1px solid var(--bd);border-radius:6px}.k{color:#d33}.p{color:#1a6fd4}.e{color:#1a9a4a}</style><title>D3 · DFT dengan ORCA</title><link href="../assets/img/favicon.png" rel="icon"/><link href="../assets/img/apple-touch-icon.png" rel="apple-touch-icon"/><script src="../assets/js/shell.js"></script></head><body><h1 lang="id">D3 · Praktik DFT dengan ORCA</h1><h1 lang="en">D3 · DFT in Practice with ORCA</h1><nav><a href="../index.html">Dashboard</a><a href="../course.html">Course</a><a href="../molecular-builder.html">Molecular Builder</a><a href="../input-builder.html">Input Builder</a><a href="../results-analyzer.html">Results</a><a href="../orca-docker.html">ORCA Docker</a></nav>
+<div class="card"><h2 lang="id">D3.1 Anatomi input ORCA</h2><h2 lang="en">D3.1 Anatomy of an ORCA input</h2>
+<pre lang="id">! B3LYP D3BJ def2-SVP Opt Freq CPCM(water) TightSCF   # baris keyword
+%pal nprocs 8 end                                     # jumlah core
+%maxcore 2000                                         # MB per core
+* xyz 0 1                                             # muatan, multiplisitas
+ C  0.000  0.000  0.000
+ ...
+*                                                     # atau: * xyzfile 0 1 mol.xyz</pre><pre lang="en">! B3LYP D3BJ def2-SVP Opt Freq CPCM(water) TightSCF   # keyword line
+%pal nprocs 8 end                                     # number of cores
+%maxcore 2000                                         # MB per core
+* xyz 0 1                                             # charge, multiplicity
+ C  0.000  0.000  0.000
+ ...
+*                                                     # or: * xyzfile 0 1 mol.xyz</pre>
+<table><tr><th lang="id">Kebutuhan</th><th lang="en">Need</th><th lang="id">Keyword / blok</th><th lang="en">Keyword / block</th></tr><tr><td lang="id">Fungsional, basis</td><td lang="en">Functional, basis</td><td><code>B3LYP</code>, <code>PBE0</code>, <code>CAM-B3LYP</code>, <code>wB97X-D3</code>; <code>def2-SVP</code>, <code>def2-TZVP</code></td></tr><tr><td lang="id">Dispersi</td><td lang="en">Dispersion</td><td><code>D3BJ</code></td></tr><tr><td lang="id">Pelarut implisit</td><td lang="en">Implicit solvent</td><td><code>CPCM(water)</code></td></tr><tr><td lang="id">Job</td><td lang="en">Job</td><td><code>SP</code>, <code>Opt</code>, <code>Freq</code>, <code>Opt Freq</code>, <code>TightOpt</code></td></tr><tr><td lang="id">Percepat hibrida</td><td lang="en">Hybrid speed-up</td><td><code>RIJCOSX def2/J</code></td></tr><tr><td lang="id">SCF sulit</td><td lang="en">Difficult SCF</td><td lang="id"><code>SlowConv</code>, <code>TightSCF</code>; blok <code>%scf MaxIter 300 end</code></td><td lang="en"><code>SlowConv</code>, <code>TightSCF</code>; block <code>%scf MaxIter 300 end</code></td></tr><tr><td lang="id">TD-DFT</td><td lang="en">TD-DFT</td><td><code>%tddft nroots 20 tda false end</code></td></tr></table></div>
+<div class="card"><h2 lang="id">D3.2 Contoh kerja</h2><h2 lang="en">D3.2 Worked examples</h2><div class="row"><div><span lang="id"><b>1 · Optimasi + frekuensi</b></span><span lang="en"><b>1 · Optimisation + frequencies</b></span><pre>! B3LYP D3BJ def2-SVP Opt Freq TightSCF
+%pal nprocs 8 end
+%maxcore 2000
+* xyzfile 0 1 mol.xyz</pre></div><div><span lang="id"><b>2 · TD-DFT (struktur sudah optimasi)</b></span><span lang="en"><b>2 · TD-DFT (structure already optimised)</b></span><pre>! CAM-B3LYP def2-TZVP CPCM(toluene) RIJCOSX def2/J TightSCF
+%pal nprocs 8 end
+%maxcore 2000
+%tddft nroots 20
+ tda false
+end
+* xyzfile 0 1 opt.xyz</pre></div></div>
+<p lang="id">Jalankan: <code>orca job.inp &gt; job.out</code>. ORCA paralel harus dipanggil dengan <b>path lengkap</b>: <code>$(which orca) job.inp &gt; job.out</code>.</p><p lang="en">Run: <code>orca job.inp &gt; job.out</code>. Parallel ORCA must be called with the <b>full path</b>: <code>$(which orca) job.inp &gt; job.out</code>.</p><span lang="id">
+<b>Skrip SLURM (sesuaikan modul/partisi cluster Anda)</b></span><span lang="en"> <b>SLURM script (adapt the module/partition to your cluster)</b></span><pre lang="id">#!/bin/bash
+#SBATCH -J orca_job
+#SBATCH -N 1
+#SBATCH -n 8
+#SBATCH -o slurm-%j.log
+module load orca            # nama modul tergantung cluster
+cd $SLURM_SUBMIT_DIR
+$(which orca) job.inp &gt; job.out</pre><pre lang="en">#!/bin/bash
+#SBATCH -J orca_job
+#SBATCH -N 1
+#SBATCH -n 8
+#SBATCH -o slurm-%j.log
+module load orca            # module name depends on the cluster
+cd $SLURM_SUBMIT_DIR
+$(which orca) job.inp &gt; job.out</pre></div>
+<div class="card"><h2 lang="id">D3.3 Berkas hasil dan cara memakainya</h2><h2 lang="en">D3.3 Output files and how to use them</h2>
+<table><tr><th lang="id">Berkas</th><th lang="en">File</th><th lang="id">Isi / langkah lanjut</th><th lang="en">Contents / next step</th></tr><tr><td><code>job.out</code></td><td lang="id">output utama → unggah ke <a href="../results-analyzer.html">Results Analyzer</a></td><td lang="en">main output → upload to the <a href="../results-analyzer.html">Results Analyzer</a></td></tr><tr><td><code>job.xyz</code></td><td lang="id">geometri akhir (untuk Freq/TD-DFT berikutnya)</td><td lang="en">final geometry (for the next Freq/TD-DFT)</td></tr><tr><td><code>job.gbw</code></td><td lang="id">orbital biner; <code>orca_2mkl job -molden</code> → <code>job.molden.input</code></td><td lang="en">binary orbitals; <code>orca_2mkl job -molden</code> → <code>job.molden.input</code></td></tr><tr><td lang="id">orbital 3D</td><td lang="en">3D orbitals</td><td lang="id"><code>orca_plot job.gbw -i</code> (menu interaktif untuk membuat cube)</td><td lang="en"><code>orca_plot job.gbw -i</code> (interactive menu to make a cube)</td></tr><tr><td><code>job.hess</code></td><td lang="id">Hessian untuk restart frekuensi</td><td lang="en">Hessian for restarting frequencies</td></tr></table>
+<p lang="id">Keberhasilan: <code>****ORCA TERMINATED NORMALLY****</code> di akhir output, ditambah <code>THE OPTIMIZATION HAS CONVERGED</code> pada optimasi.</p><p lang="en">Success: <code>****ORCA TERMINATED NORMALLY****</code> at the end of the output, plus <code>THE OPTIMIZATION HAS CONVERGED</code> for optimisations.</p></div>
+<p lang="id"><a href="d2-fungsional.html">← D2</a> · <a href="../course.html">Daftar bab</a> · <a href="d4-gaussian.html">D4 →</a></p><p lang="en"><a href="d2-fungsional.html">← D2</a> · <a href="../course.html">Chapter list</a> · <a href="d4-gaussian.html">D4 →</a></p></body></html>

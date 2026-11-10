@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width,initial-scale=1" name="viewport"/><link href="../assets/css/style.css" rel="stylesheet"/><script>window.MathJax={tex:{inlineMath:[["$","$"],["\\(","\\)"]]}}</script><script async="" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script><script src="../assets/js/viz.js"></script><style>.flow{display:flex;flex-wrap:wrap;gap:6px;align-items:center}.flow div{border:1px solid var(--ac);border-radius:8px;padding:6px 10px}.row{display:flex;flex-wrap:wrap;gap:12px}.row>*{flex:1;min-width:300px}pre{background:var(--card);padding:8px;overflow:auto;font-size:13px;border:1px solid var(--bd);border-radius:6px}.k{color:#d33}.p{color:#1a6fd4}.e{color:#1a9a4a}</style><title>D4 · DFT dengan Gaussian</title><link href="../assets/img/favicon.png" rel="icon"/><link href="../assets/img/apple-touch-icon.png" rel="apple-touch-icon"/><script src="../assets/js/shell.js"></script></head><body><h1 lang="id">D4 · Praktik DFT dengan Gaussian</h1><h1 lang="en">D4 · DFT in Practice with Gaussian</h1><nav><a href="../index.html">Dashboard</a><a href="../course.html">Course</a><a href="../molecular-builder.html">Molecular Builder</a><a href="../input-builder.html">Input Builder</a><a href="../results-analyzer.html">Results</a><a href="../orca-docker.html">ORCA Docker</a></nav>
+<div class="card"><h2 lang="id">D4.1 Anatomi input Gaussian (.com / .gjf)</h2><h2 lang="en">D4.1 Anatomy of a Gaussian input (.com / .gjf)</h2>
+<pre lang="id">%nprocshared=8                      # Link 0: sumber daya
+%mem=16GB
+%chk=mol.chk                        # checkpoint (untuk orbital/restart)
+#p B3LYP/6-31G(d) opt freq EmpiricalDispersion=GD3BJ scrf=(smd,solvent=water)
+
+judul pekerjaan                     # baris kosong sebelum dan sesudah judul
+
+0 1                                 # muatan dan multiplisitas
+ C  0.000  0.000  0.000
+ ...
+(baris kosong di akhir)</pre><pre lang="en">%nprocshared=8                      # Link 0: resources
+%mem=16GB
+%chk=mol.chk                        # checkpoint (for orbitals/restart)
+#p B3LYP/6-31G(d) opt freq EmpiricalDispersion=GD3BJ scrf=(smd,solvent=water)
+
+job title                           # blank line before and after the title
+
+0 1                                 # charge and multiplicity
+ C  0.000  0.000  0.000
+ ...
+(blank line at the end)</pre>
+<table><tr><th lang="id">Kebutuhan</th><th lang="en">Need</th><th lang="id">Route section</th><th lang="en">Route section</th></tr><tr><td lang="id">Fungsional/basis</td><td lang="en">Functional/basis</td><td><code>B3LYP/6-31G(d)</code>, <code>PBE1PBE/def2SVP</code>, <code>CAM-B3LYP/6-311+G(d,p)</code></td></tr><tr><td lang="id">Job</td><td lang="en">Job</td><td><code>opt</code>, <code>freq</code>, <code>opt freq</code>, <code>opt=tight</code></td></tr><tr><td lang="id">Dispersi</td><td lang="en">Dispersion</td><td><code>EmpiricalDispersion=GD3BJ</code></td></tr><tr><td lang="id">Pelarut</td><td lang="en">Solvent</td><td><code>scrf=(smd,solvent=water)</code></td></tr><tr><td lang="id">Grid yang lebih halus</td><td lang="en">Finer grid</td><td><code>int=ultrafine</code></td></tr><tr><td lang="id">SCF sulit</td><td lang="en">Difficult SCF</td><td lang="id"><code>scf=xqc</code> atau <code>scf=(maxcycle=300)</code></td><td lang="en"><code>scf=xqc</code> or <code>scf=(maxcycle=300)</code></td></tr><tr><td lang="id">TD-DFT</td><td lang="en">TD-DFT</td><td lang="id"><code>td(nstates=20)</code> (tambahkan <code>td=(nstates=20,root=1)</code> untuk optimasi keadaan tereksitasi)</td><td lang="en"><code>td(nstates=20)</code> (add <code>td=(nstates=20,root=1)</code> to optimise an excited state)</td></tr></table></div>
+<div class="card"><h2 lang="id">D4.2 Contoh TD-DFT dan konversi orbital</h2><h2 lang="en">D4.2 TD-DFT example and orbital conversion</h2>
+<pre lang="id">%chk=dye.chk
+#p CAM-B3LYP/6-311+G(d,p) td(nstates=20) scrf=(smd,solvent=toluene)
+
+TD-DFT spektrum
+
+0 1
+(koordinat hasil optimasi)</pre><pre lang="en">%chk=dye.chk
+#p CAM-B3LYP/6-311+G(d,p) td(nstates=20) scrf=(smd,solvent=toluene)
+
+TD-DFT spectrum
+
+0 1
+(coordinates from the optimisation)</pre>
+<pre>formchk dye.chk dye.fchk                         # chk → fchk
+cubegen 0 MO=Homo dye.fchk homo.cube 0 h        # cube HOMO
+cubegen 0 MO=Lumo dye.fchk lumo.cube 0 h        # cube LUMO</pre>
+<p lang="id">Keberhasilan: <code>Normal termination of Gaussian</code>; optimasi: <code>Optimization completed</code> dan <code>Stationary point found</code>. Frekuensi negatif pada blok <code>Frequencies --</code> berarti imajiner.</p><p lang="en">Success: <code>Normal termination of Gaussian</code>; optimisation: <code>Optimization completed</code> and <code>Stationary point found</code>. A negative frequency in the <code>Frequencies --</code> block means an imaginary mode.</p>
+<p lang="id">Jalankan: <code>g16 &lt; job.com &gt; job.log</code> (atau <code>g16 job.com</code> yang menghasilkan <code>job.log</code>). Unggah <code>job.log</code> ke <a href="../results-analyzer.html">Results Analyzer</a>.</p><p lang="en">Run: <code>g16 &lt; job.com &gt; job.log</code> (or <code>g16 job.com</code>, which produces <code>job.log</code>). Upload <code>job.log</code> to the <a href="../results-analyzer.html">Results Analyzer</a>.</p></div>
+<div class="card"><h2 lang="id">D4.3 Perbandingan cepat ORCA vs Gaussian</h2><h2 lang="en">D4.3 Quick comparison: ORCA vs Gaussian</h2>
+<table><tr><th></th><th>ORCA</th><th>Gaussian</th></tr><tr><td lang="id">Format</td><td lang="en">Format</td><td lang="id"><code>.inp</code>, keyword <code>!</code>, blok <code>%</code></td><td lang="en"><code>.inp</code>, keyword <code>!</code>, block <code>%</code></td><td lang="id"><code>.com</code>, route <code>#p</code>, Link 0 <code>%</code></td><td lang="en"><code>.com</code>, route <code>#p</code>, Link 0 <code>%</code></td></tr><tr><td lang="id">Keluaran</td><td lang="en">Output</td><td><code>.out</code>, <code>.gbw</code></td><td><code>.log</code>, <code>.chk</code></td></tr><tr><td lang="id">Orbital untuk visual</td><td lang="en">Orbitals for visualisation</td><td lang="id"><code>orca_2mkl -molden</code> atau <code>orca_plot</code></td><td lang="en"><code>orca_2mkl -molden</code> or <code>orca_plot</code></td><td lang="id"><code>formchk</code> + <code>cubegen</code></td><td lang="en"><code>formchk</code> + <code>cubegen</code></td></tr><tr><td lang="id">Lisensi</td><td lang="en">Licence</td><td lang="id">gratis akademik (daftar)</td><td lang="en">free for academics (registration)</td><td lang="id">komersial</td><td lang="en">commercial</td></tr></table></div>
+<p lang="id"><a href="d3-orca.html">← D3</a> · <a href="../course.html">Daftar bab</a> · <a href="d5-output-troubleshooting.html">D5 →</a></p><p lang="en"><a href="d3-orca.html">← D3</a> · <a href="../course.html">Chapter list</a> · <a href="d5-output-troubleshooting.html">D5 →</a></p></body></html>
