@@ -14,9 +14,14 @@ async function up(role,files){
  for(const f of files){
   let nm=entered;
   if(!nm&&(role==='ch'||role==='cl')){
-   nm=orbitalMoleculeName(f.name);
-   if(!nm&&cur&&MOL[cur]&&!MOL[cur][role])nm=cur;
-   if(!nm){const candidates=names().filter(n=>!MOL[n][role]);if(candidates.length===1)nm=candidates[0]}
+   // Pair the second orbital with the currently selected molecule first.
+   // This handles common filenames such as HOMO.cube + LUMO.cube,
+   // where the filenames themselves contain no common molecule name.
+   const counterpart=role==='ch'?'cl':'ch';
+   if(cur&&MOL[cur]&&(MOL[cur][counterpart]||MOL[cur][counterpart+'i']))nm=cur;
+   if(!nm)nm=orbitalMoleculeName(f.name);
+   if(!nm&&cur&&MOL[cur])nm=cur;
+   if(!nm){const candidates=names().filter(n=>!MOL[n][counterpart]);if(candidates.length===1)nm=candidates[0]}
    if(!nm)nm='Molecule 1';
   }
   if(!nm)nm=f.name.replace(/\.[^.]+$/,'');
