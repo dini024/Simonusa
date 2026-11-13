@@ -18,12 +18,39 @@ function parse(t,name){const g=/Entering Gaussian|Gaussian, Inc/.test(t);const o
  if(g){const k=t.lastIndexOf('The electronic state is');if(k>=0)t.slice(k).split('\n').forEach(l=>{const n=(l.match(/-?\d+\.\d{5}/g)||[]).map(Number).map(x=>x*H2EV);if(/Alpha  occ/.test(l))oc.push(...n);else if(/Alpha virt/.test(l))vi.push(...n)})}
  else{const k=t.lastIndexOf('ORBITAL ENERGIES');if(k>=0){let st=false;for(const l of t.slice(k).split('\n')){const m=l.match(/^\s*\d+\s+([\d.]+)\s+(-?[\d.]+)\s+(-?[\d.]+)/);if(m){st=true;(+m[1]>0?oc:vi).push(+m[3])}else if(st)break}}}
  if(oc.length&&vi.length){o.oc=oc;o.vi=vi}
- // TDDFT
+ // TD-DFT / UV-Vis absorption spectrum (ORCA 5 and ORCA 6)
  let ex=[];
- if(g){let cur=null;L.forEach(l=>{let m=l.match(/Excited State\s+(\d+):\s+(\S+)\s+(-?[\d.]+) eV\s+([\d.]+) nm\s+f=([\d.]+)/);if(m){cur={n:+m[1],sym:m[2],E:+m[3],nm:+m[4],f:+m[5],tr:[]};ex.push(cur)}else if(cur&&(m=l.match(/^\s+(\d+)\s+->\s*(\d+)\s+(-?[\d.]+)/))&&cur.tr.length<3)cur.tr.push(m[1]+'→'+m[2]+' ('+m[3]+')')})}
- else{const k=t.lastIndexOf('ABSORPTION SPECTRUM VIA TRANSITION ELECTRIC DIPOLE MOMENTS');if(k>=0){let n=0;t.slice(k).split('\n').forEach(l=>{const m=l.match(/->\s*\d+-\S+\s+(\d+\.\d+)\s+(\d+\.\d+)\s+(\d+\.\d+)/);if(m)ex.push({n:++n,sym:'',E:+m[1]*CM2EV,nm:+m[2],f:+m[3],tr:[]})});
-  const tdk=t.lastIndexOf('TD-DFT/TDA EXCITED STATES')>=0?t.lastIndexOf('TD-DFT/TDA EXCITED STATES'):t.lastIndexOf('TD-DFT EXCITED STATES');
-  if(tdk>=0){let cs=0;t.slice(tdk).split('\n').forEach(l=>{let m=l.match(/^STATE\s+(\d+):/);if(m)cs=+m[1];else if(cs&&(m=l.match(/^\s+(\d+[ab]\s+->\s+\d+[ab])\s+:\s+(-?[\d.]+)/))){const e=ex[cs-1];if(e&&e.tr.length<3)e.tr.push(m[1].replace(/\s+/g,'')+' ('+m[2]+')')}})}}}
+ const h1=t.indexOf('ABSORPTION SPECTRUM VIA TRANSITION ELECTRIC DIPOLE MOMENTS');
+ if(h1>=0){
+  let section=t.slice(h1);
+  const stop=section.search(/ABSORPTION SPECTRUM VIA TRANSITION VELOCITY DIPOLE MOMENTS|ABSORPTION SPECTRUM VIA TRANSITION MAGNETIC DIPOLE MOMENTS|CD SPECTRUM/i);
+  if(stop>0)section=section.slice(0,stop);
+  let n=0;
+  for(const line of section.split(/\r?\n/)){
+   // ORCA 6: transition, E(eV), wavenumber(cm-1), wavelength(nm), oscillator strength
+   let m=line.match(/^\s*(\S+)\s*->\s*(\S+)\s+([-+]?\d+(?:\.\d+)?)\s+([-+]?\d+(?:\.\d+)?)\s+([-+]?\d+(?:\.\d+)?)\s+([-+]?\d+(?:\.\d+)?(?:[Ee][-+]?\d+)?)/);
+   if(m){
+    const E=+m[3],nm=+m[5],f=+m[6];
+    if(E>0&&nm>0&&Number.isFinite(f)){ex.push({n:++n,sym:'',E,nm,f,tr:[m[1]+' → '+m[2]]});continue}
+   }
+   // ORCA 5: state, wavenumber(cm-1), wavelength(nm), oscillator strength
+   m=line.match(/^\s*(\d+)\s+([-+]?\d+(?:\.\d+)?)\s+([-+]?\d+(?:\.\d+)?)\s+([-+]?\d+(?:\.\d+)?(?:[Ee][-+]?\d+)?)(?:\s|$)/);
+   if(m){
+    const wn=+m[2],nm=+m[3],f=+m[4];
+    if(wn>0&&nm>0&&Number.isFinite(f))ex.push({n:++n,sym:'',E:wn*CM2EV,nm,f,tr:[]});
+   }
+  }
+ }
+ // Keep the orbital-transition assignments when the output contains the TD-DFT state section.
+ const tdk=Math.max(t.lastIndexOf('TD-DFT/TDA EXCITED STATES'),t.lastIndexOf('TD-DFT EXCITED STATES'));
+ if(tdk>=0){
+  let cs=0;
+  for(const l of t.slice(tdk).split(/\r?\n/)){
+   let m=l.match(/^STATE\s+(\d+):/);if(m){cs=+m[1];continue}
+   m=l.match(/^\s+(\d+[ab]?\s*->\s*\d+[ab]?)\s*:\s*([-+]?\d+(?:\.\d+)?)/);
+   if(m&&ex[cs-1]&&ex[cs-1].tr.length<4)ex[cs-1].tr.push(m[1].replace(/\s+/g,'')+' ('+m[2]+')');
+  }
+ }
  if(ex.length)o.ex=ex;
  // docking
  const dk=L.filter(l=>/^\s*\d+\s+-?\d+\.\d+\s+\d+\.\d+\s+\d+\.\d+\s*$/.test(l));if(/ORCA DOCKER|DOCKER/i.test(t)&&dk.length)o.dock=dk.map(l=>l.trim().split(/\s+/));
