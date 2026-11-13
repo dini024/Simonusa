@@ -23,3 +23,10 @@ input[type=range]{padding:0;accent-color:var(--ac2)}textarea{width:98%;font-fami
 .fc{border:1px solid var(--bd);border-radius:12px;padding:10px;background:var(--card)}.fc b{display:block}.fc small{color:var(--sub)}
 .refs{font-size:12px;color:var(--sub);line-height:1.5}.refs li{margin:2px 0}
 @media print{header.site,.pz{display:none}}
+
+/* Improved figure and logo rendering */
+.brand img{width:48px;height:48px;object-fit:contain;border-radius:8px;background:#fff;padding:2px}
+canvas{display:block;width:100%;height:auto;min-height:180px;image-rendering:auto}
+.card img{max-width:100%;height:auto}
+figure{margin:14px 0}figure img, .diagram img{display:block;max-width:100%;height:auto;margin:auto}
+@media(max-width:650px){body{padding-left:12px;padding-right:12px}.brand b{font-size:1.15rem}header.site nav{margin-left:0}}
