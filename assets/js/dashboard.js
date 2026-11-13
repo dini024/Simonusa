@@ -123,11 +123,33 @@ function cube(id,m,k){
   el.innerHTML='<div style="padding:12px;color:#b42318;font-size:13px">Cannot render '+label+': '+esc(err.message||String(err))+'</div>';
  }
 }
-function rEl(){const ns=names().filter(n=>elec(MOL[n])),m=MOL[cur]||{};cube('vh',m,'ch');cube('vl',m,'cl');$('isov').textContent=$('iso').value;const cb=+$('cb').value,rx=+$('rx').value;
- $('tel').innerHTML='<tr><th>Molekul</th><th>HOMO</th><th>LUMO</th><th>E<sub>gap</sub></th><th>IP</th><th>EA</th><th>χ</th><th>η</th><th>S (eV⁻¹)</th><th>ω</th><th>ΔG<sub>inj</sub>=LUMO−E<sub>CB</sub></th><th>ΔG<sub>reg</sub>=E<sub>redox</sub>−HOMO</th></tr>'+ns.map(n=>{const e=elec(MOL[n]),f=x=>x.toFixed(3);return`<tr><td>${esc(n)}</td><td>${f(e.h)}</td><td>${f(e.l)}</td><td>${f(e.gap)}</td><td>${f(e.IP)}</td><td>${f(e.EA)}</td><td>${f(e.chi)}</td><td>${f(e.eta)}</td><td>${f(e.S)}</td><td>${f(e.om)}</td><td>${f(e.l-cb)}</td><td>${f(rx-e.h)}</td></tr>`}).join('');
- const c=$('c_lad'),g=c.getContext('2d'),fg=getComputedStyle(document.body).color;g.clearRect(0,0,760,360);g.font='12px system-ui';if(!ns.length)return;const E=ns.map(n=>elec(MOL[n])),lo=Math.min(...E.map(e=>e.h),cb,rx)-.6,hi=Math.max(...E.map(e=>e.l),cb,rx)+.6,Y=v=>340-(v-lo)/(hi-lo)*320;
- [[cb,'E_CB TiO₂','#888'],[rx,'E_redox','#a50']].forEach(([v,t,cl])=>{g.strokeStyle=cl;g.setLineDash([6,4]);g.beginPath();g.moveTo(50,Y(v));g.lineTo(750,Y(v));g.stroke();g.setLineDash([]);g.fillStyle=cl;g.fillText(t+' '+v,52,Y(v)-3)});
- const w=700/ns.length;ns.forEach((n,i)=>{const x=50+i*w+w/2-35,e=E[i];g.lineWidth=4;g.strokeStyle='#d33';g.beginPath();g.moveTo(x,Y(e.h));g.lineTo(x+70,Y(e.h));g.stroke();g.strokeStyle='#1a6fd4';g.beginPath();g.moveTo(x,Y(e.l));g.lineTo(x+70,Y(e.l));g.stroke();g.lineWidth=1;g.fillStyle=fg;g.fillText('LUMO '+e.l.toFixed(2),x,Y(e.l)-5);g.fillText('HOMO '+e.h.toFixed(2),x,Y(e.h)+14);g.fillText(n+' (Eg '+e.gap.toFixed(2)+')',x,350)})}
+function rEl(){
+ const ns=names().filter(n=>elec(MOL[n])),m=MOL[cur]||{};
+ cube('vh',m,'ch');cube('vl',m,'cl');$('isov').textContent=$('iso').value;
+ const fmt=x=>Number(x).toFixed(3);
+ $('tel').innerHTML='<tr><th>Molecule</th><th>HOMO (eV)</th><th>LUMO (eV)</th><th>Gap (eV)</th><th>IP (eV)</th><th>EA (eV)</th><th>χ (eV)</th><th>η (eV)</th><th>S (eV⁻¹)</th><th>ω (eV)</th></tr>'+ns.map(n=>{const e=elec(MOL[n]);return`<tr><td>${esc(n)}</td><td>${fmt(e.h)}</td><td>${fmt(e.l)}</td><td>${fmt(e.gap)}</td><td>${fmt(e.IP)}</td><td>${fmt(e.EA)}</td><td>${fmt(e.chi)}</td><td>${fmt(e.eta)}</td><td>${fmt(e.S)}</td><td>${fmt(e.om)}</td></tr>`}).join('');
+ const c=$('c_lad'),g=c.getContext('2d'),W=c.width,H=c.height;g.clearRect(0,0,W,H);
+ const fg=getComputedStyle(document.body).color,homo='#e05a47',lumo='#3478d4';
+ if(!ns.length){g.fillStyle=fg;g.font='16px system-ui';g.textAlign='center';g.fillText('Upload molecular orbital energies to display the diagram',W/2,H/2);return}
+ const E=ns.map(n=>({name:n,...elec(MOL[n])}));
+ const minRaw=Math.min(...E.map(e=>e.h)),maxRaw=Math.max(...E.map(e=>e.l)),span=Math.max(1.5,maxRaw-minRaw);
+ const lo=minRaw-Math.max(.45,span*.12),hi=maxRaw+Math.max(.45,span*.12),left=76,right=24,top=32,bottom=78,plotH=H-top-bottom,plotW=W-left-right,Y=v=>top+(hi-v)/(hi-lo)*plotH;
+ g.font='13px system-ui';g.textAlign='right';g.textBaseline='middle';g.fillStyle=fg;
+ const raw=(hi-lo)/6,pow=Math.pow(10,Math.floor(Math.log10(raw))),step=[1,2,5,10].map(x=>x*pow).find(x=>x>=raw)||10*pow;
+ for(let v=Math.ceil(lo/step)*step;v<=hi+1e-8;v+=step){const y=Y(v);g.strokeStyle='rgba(128,128,128,.20)';g.lineWidth=1;g.beginPath();g.moveTo(left,y);g.lineTo(W-right,y);g.stroke();g.fillStyle=fg;g.fillText(v.toFixed(1),left-12,y)}
+ g.save();g.translate(18,H/2);g.rotate(-Math.PI/2);g.textAlign='center';g.font='14px system-ui';g.fillStyle=fg;g.fillText('Orbital energy (eV)',0,0);g.restore();
+ const slot=plotW/E.length,barW=Math.min(64,Math.max(24,slot*.34));
+ E.forEach((e,i)=>{const cx=left+slot*(i+.5),yh=Y(e.h),yl=Y(e.l),cardW=Math.min(slot-12,150),cardX=cx-cardW/2;
+  g.fillStyle='rgba(128,128,128,.055)';g.beginPath();g.roundRect(cardX,top+4,cardW,plotH-8,12);g.fill();g.strokeStyle='rgba(128,128,128,.18)';g.lineWidth=1;g.stroke();
+  g.setLineDash([3,4]);g.strokeStyle='rgba(128,128,128,.55)';g.beginPath();g.moveTo(cx,yh);g.lineTo(cx,yl);g.stroke();g.setLineDash([]);
+  g.lineCap='round';g.lineWidth=9;g.strokeStyle=homo;g.beginPath();g.moveTo(cx-barW/2,yh);g.lineTo(cx+barW/2,yh);g.stroke();g.strokeStyle=lumo;g.beginPath();g.moveTo(cx-barW/2,yl);g.lineTo(cx+barW/2,yl);g.stroke();
+  g.fillStyle=homo;g.font='600 12px system-ui';g.textAlign='center';g.textBaseline='bottom';g.fillText(e.h.toFixed(2),cx,yh-9);
+  g.fillStyle=lumo;g.textBaseline='top';g.fillText(e.l.toFixed(2),cx,yl+9);
+  g.fillStyle=fg;g.font='600 12px system-ui';g.textBaseline='middle';g.fillText('Eg '+e.gap.toFixed(2),cx,Math.max(top+15,Math.min(top+plotH-15,(yh+yl)/2)));
+  g.font='600 13px system-ui';g.textBaseline='top';g.fillText(e.name,cx,H-bottom+22);
+ });
+ g.textAlign='left';g.textBaseline='alphabetic';g.font='11px system-ui';g.fillStyle=fg;g.fillText('Higher energy',left,18);
+}
 // optik
 const sg=()=>+$('sig').value,F8=8065.544,epsAt=(m,l)=>{const s=sg()*F8,v=1e7/l;return m.ex.reduce((a,e)=>a+1.3062974e8*e.f/s*Math.exp(-(((v-e.E*F8)/s)**2)),0)},Fat=(m,l)=>m.ex.reduce((a,e)=>a+e.f*Math.exp(-(((1239.84/l-e.E)/sg())**2)),0);
 function rOp(){const ns=names().filter(n=>MOL[n].ex),x=lin(250,900,326),nz=$('nm').checked;$('sgv').textContent=sg().toFixed(2);const curve=(m,f)=>{const y=x.map(l=>f(m,l)),mx=nz?Math.max(...y)||1:1;return y.map(v=>v/mx)};
@@ -147,4 +169,4 @@ function drawPV(){const ns=names(),Pin=+$('pin').value||100;const S=[],E=[],rows
  const cl=id=>$(id).getContext('2d').clearRect(0,0,760,300);S.length?plot('c_jvs',S,{xl:'V',yl:'J (mA/cm²)',y0:0}):cl('c_jvs');E.length?plot('c_jve',E,{xl:'V',yl:'J (mA/cm²)'}):cl('c_jve');
  $('tpv').innerHTML='<tr><th rowspan="2">Molekul</th><th colspan="4">Simulasi / prediksi</th><th colspan="4">Eksperimen</th></tr><tr><th>Voc</th><th>Jsc</th><th>FF</th><th>PCE (%)</th><th>Voc</th><th>Jsc</th><th>FF</th><th>PCE (%)</th></tr>'+rows.join('')}
 function csv(id,fn){const r=[...$(id).rows].map(r=>[...r.cells].map(c=>'"'+c.textContent.replace(/"/g,'""')+'"').join(','));const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([r.join('\n')]));a.download=fn;a.click()}
-['ms','sig','nm','iso','cb','rx','dv','pin'].forEach(i=>$(i).oninput=()=>{rStr();rEl();rOp();drawPV()});render();
+['ms','sig','nm','iso','pin'].forEach(i=>$(i).oninput=()=>{rStr();rEl();rOp();drawPV()});render();
