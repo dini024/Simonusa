@@ -4,10 +4,10 @@ const nums=t=>t.split(/\r?\n/).map(l=>l.trim().split(/[\s,;]+/).map(Number)).fil
 const rd=(f,b)=>new Promise(r=>{const x=new FileReader();x.onload=()=>r(x.result);b?x.readAsDataURL(f):x.readAsText(f)});
 let cur='';
 function orbitalMoleculeName(filename){
- const base=filename.replace(/\\.(cube|cub|png|jpe?g|webp)$/i,'')
+ return filename
+  .replace(/\.(cube|cub|png|jpe?g|webp)$/i,'')
   .replace(/(?:^|[ _.-])(HOMO|LUMO|HIGHEST[_ -]?OCCUPIED|LOWEST[_ -]?UNOCCUPIED|FRONTIER[_ -]?ORBITAL)(?=$|[ _.-])/ig,' ')
   .replace(/[ _.-]+/g,' ').trim();
- return base;
 }
 async function up(role,files){
  const entered=$('mn').value.trim();
@@ -59,26 +59,27 @@ const orbitalViewers={homo:null,lumo:null};
 const BOHR_TO_ANG=0.529177210903;
 const CUBE_ELEMENTS=['','H','He','Li','Be','B','C','N','O','F','Ne','Na','Mg','Al','Si','P','S','Cl','Ar','K','Ca','Sc','Ti','V','Cr','Mn','Fe','Co','Ni','Cu','Zn','Ga','Ge','As','Se','Br','Kr','Rb','Sr','Y','Zr','Nb','Mo','Tc','Ru','Rh','Pd','Ag','Cd','In','Sn','Sb','Te','I','Xe','Cs','Ba','La','Ce','Pr','Nd','Pm','Sm','Eu','Gd','Tb','Dy','Ho','Er','Tm','Yb','Lu','Hf','Ta','W','Re','Os','Ir','Pt','Au','Hg','Tl','Pb','Bi','Po','At','Rn'];
 function cubeAtomsXYZ(data){
- const L=data.replace(/\\r/g,'').split('\\n');
+ const L=data.replace(/\r/g,'').split('\n');
  if(L.length<7)return '';
- const h=L[2].trim().split(/\\s+/),nat=Math.abs(parseInt(h[0],10));
+ const h=L[2].trim().split(/\s+/),nat=Math.abs(parseInt(h[0],10));
  if(!Number.isFinite(nat)||nat<1||L.length<6+nat)return '';
- const grid=L.slice(3,6).map(x=>x.trim().split(/\\s+/));
+ const grid=L.slice(3,6).map(x=>x.trim().split(/\s+/));
+ // Gaussian cube: positive grid counts indicate Bohr; negative counts indicate Angstrom.
  const bohr=Number(grid[0][0])>0;
  const factor=bohr?BOHR_TO_ANG:1;
  const out=[String(nat),'Atoms read from Gaussian cube'];
  for(let i=0;i<nat;i++){
-  const p=L[6+i].trim().split(/\\s+/),z=Math.abs(parseInt(p[0],10));
+  const p=L[6+i].trim().split(/\s+/),z=Math.abs(parseInt(p[0],10));
   const el=CUBE_ELEMENTS[z]||'C';
   const xyz=p.slice(2,5).map(Number);
   if(xyz.length!==3||xyz.some(v=>!Number.isFinite(v)))return '';
   out.push(el+' '+xyz.map(v=>(v*factor).toFixed(7)).join(' '));
  }
- return out.join('\\n');
+ return out.join('\n');
 }
 function geometryXYZ(m,cubeText){
  if(Array.isArray(m.geom)&&m.geom.length){
-  return [String(m.geom.length),'Uploaded molecular geometry',...m.geom.map(a=>a[0]+' '+a.slice(1,4).join(' '))].join('\\n');
+  return [String(m.geom.length),'Uploaded molecular geometry',...m.geom.map(a=>a[0]+' '+a.slice(1,4).join(' '))].join('\n');
  }
  return cubeAtomsXYZ(cubeText);
 }
@@ -95,7 +96,8 @@ function cube(id,m,k){
  const data=m[k];
  if(!data){el.innerHTML='<div style="height:100%;display:grid;place-items:center;text-align:center;padding:14px;box-sizing:border-box;color:#667085">Upload '+label+' .cube file.<br><small>Use the same molecule name for HOMO and LUMO.</small></div>';return;}
  try{
-  if(!/^\\s*[^\\n]*\\n[^\\n]*\\n\\s*-?\\d+\\s/.test(data))throw new Error('The file does not look like a Gaussian cube file.');
+  const L=data.replace(/\r/g,'').split('\n');
+  if(L.length<7||!Number.isFinite(Number(L[2].trim().split(/\s+/)[0])))throw new Error('Invalid Gaussian cube header. Check that this is a volumetric orbital .cube file.');
   const viewer=$3Dmol.createViewer(el,{backgroundColor:0xffffff,antialias:true});
   if(!viewer)throw new Error('WebGL viewer could not be created.');
   const geom=geometryXYZ(m,data);
@@ -103,11 +105,10 @@ function cube(id,m,k){
    viewer.addModel(geom,'xyz');
    viewer.setStyle({}, {stick:{radius:0.13,colorscheme:'Jmol'},sphere:{scale:0.18,colorscheme:'Jmol'}});
   }
-  const iso=Math.max(0.0005,Number($('iso').value)||0.02);
+  const iso=Math.max(0.0001,Number($('iso').value)||0.02);
   const vol=new $3Dmol.VolumeData(data,'cube');
-  // Correct cube orbital rendering: two signed isosurfaces, matching 3Dmol's documented API.
-  viewer.addIsosurface(vol,{isoval:iso,color:'#2457C5',alpha:0.88,smoothness:10});
-  viewer.addIsosurface(vol,{isoval:-iso,color:'#D83B3B',alpha:0.88,smoothness:10});
+  viewer.addIsosurface(vol,{isoval:iso,color:'#2457C5',alpha:0.95,smoothness:10});
+  viewer.addIsosurface(vol,{isoval:-iso,color:'#D83B3B',alpha:0.95,smoothness:10});
   viewer.zoomTo();
   viewer.resize();
   viewer.render();
