@@ -2,8 +2,7 @@
 <html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width,initial-scale=1" name="viewport"/><title>Literatur | CompChem Lab</title><link href="assets/css/style.css" rel="stylesheet"/><style>.tag{font-size:12px;padding:1px 6px;border-radius:8px;background:#1a9a4a;color:#fff}.tag.u{background:#b8860b}</style><link href="assets/img/favicon.png" rel="icon"/><link href="assets/img/apple-touch-icon.png" rel="apple-touch-icon"/><script src="assets/js/shell.js"></script></head><body>
 <h1 lang="id">Literatur Pendukung</h1><h1 lang="en">Supporting Literature</h1>
 <nav><a href="index.html">Dashboard</a><a href="course.html">Course</a><a href="molecular-builder.html">Molecular Builder</a><a href="input-builder.html">Input Builder</a><a href="results-analyzer.html">Results</a><a href="orca-docker.html">ORCA Docker</a></nav>
-<div class="card"><p lang="id"><span class="tag">terverifikasi</span> = judul/DOI dicek lewat pencarian web. <span class="tag u">cek ulang</span> = ditulis dari pengetahuan; periksa DOI dan detail sebelum dikutip. Gambar dari paper tidak disalin (hak cipta): buka lewat DOI.</p><p lang="en"><span class="tag">verified</span> = title/DOI checked through a web search. <span class="tag u">re-check</span> = written from knowledge; check the DOI and details before citing. Paper figures are not copied (copyright): open them via the DOI.</p><span lang="id">
-Cari: </span><span lang="en"> Search: </span><input id="q" placeholder="mis. DSSC, zeolit, TD-DFT" data-en-placeholder="e.g. DSSC, zeolite, TD-DFT" size="30"/><span lang="id"> Topik: </span><span lang="en"> Topic: </span><select id="t"><option data-en="all" value="">semua</option></select>
+<div class="card"><div class="topic-filter"><label lang="id" for="t">Topik:</label><label lang="en" for="t">Topic:</label><select id="t"><option data-en="All topics" value="">Semua topik</option></select></div>
 <table id="tb"><tr><th lang="id">Topik</th><th lang="en">Topic</th><th lang="id">Referensi</th><th lang="en">Reference</th><th lang="id">Status</th><th lang="en">Status</th></tr></table></div>
 <script>
 const R=[
@@ -24,6 +23,6 @@ const R=[
 ];
 const T=[...new Set(R.map(r=>r[0]))];document.getElementById('t').innerHTML+=T.map(t=>`<option value="${t}">${t}</option>`).join('');
 const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;');
-function draw(){const q=document.getElementById('q').value.toLowerCase(),t=document.getElementById('t').value;document.getElementById('tb').innerHTML='<tr><th>Topik</th><th>Referensi</th><th>Status</th></tr>'+R.filter(r=>(!t||r[0]==t)&&(r[0]+r[1]).toLowerCase().includes(q)).map(r=>`<tr><td>${r[0]}</td><td>${esc(r[1])} <a href="${r[4]||'https://doi.org/'+r[2]}" target="_blank" rel="noopener">${r[4]?'arXiv':'DOI'}</a></td><td><span class="tag ${r[3]?'':'u'}">${r[3]?'terverifikasi':'cek ulang'}</span></td></tr>`).join('')}
-document.getElementById('q').oninput=document.getElementById('t').onchange=draw;draw();
+function draw(){const t=document.getElementById('t').value;document.getElementById('tb').innerHTML='<tr><th>Topik</th><th>Referensi</th><th>Status</th></tr>'+R.filter(r=>!t||r[0]==t).map(r=>`<tr><td>${r[0]}</td><td>${esc(r[1])} <a href="${r[4]||'https://doi.org/'+r[2]}" target="_blank" rel="noopener">${r[4]?'arXiv':'DOI'}</a></td><td><span class="tag ${r[3]?'':'u'}">${r[3]?'terverifikasi':'cek ulang'}</span></td></tr>`).join('')}
+document.getElementById('t').onchange=draw;draw();
 </script></body></html>
