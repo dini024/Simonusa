@@ -2,6 +2,41 @@
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ORCA DOCKER Workbench</title><link rel="stylesheet" href="assets/css/style.css"><script src="https://3Dmol.org/build/3Dmol-min.js"></script><script src="assets/js/api.js"></script><script src="assets/js/shell.js"></script>
 <style>
 .grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.grid2>*{min-width:0}.viewer{position:relative;display:block;width:100%;height:360px;min-height:280px;overflow:hidden;isolation:isolate;border:1px solid var(--bd);border-radius:12px;background:#fff;contain:layout paint}.viewer canvas{position:absolute!important;inset:0!important;display:block!important;width:100%!important;height:100%!important;max-width:100%!important;max-height:100%!important;border:0!important;border-radius:0!important;background:#fff!important}.viewer .mol-container{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;overflow:hidden!important}.muted{color:var(--sub)}pre{white-space:pre-wrap;overflow:auto;background:var(--cv);padding:12px;border:1px solid var(--bd);border-radius:8px}.field{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:8px 0}label{font-weight:600}.field input[type=file]{max-width:100%}@media(max-width:700px){.grid2{grid-template-columns:1fr}}
+
+/* Compact parsed ORCA output and energy results for dense log files */
+#outText{
+  display:block;
+  box-sizing:border-box;
+  width:100%;
+  max-width:100%;
+  max-height:520px;
+  min-height:260px;
+  margin:8px 0 0;
+  padding:10px 12px;
+  overflow:auto;
+  white-space:pre;
+  overflow-wrap:normal;
+  word-break:normal;
+  font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono",monospace;
+  font-size:11px;
+  line-height:1.3;
+  font-weight:400;
+  letter-spacing:0;
+  tab-size:4;
+}
+#energy{min-width:0;overflow-x:auto}
+#energy h3{font-size:15px;line-height:1.3;margin:8px 0 5px}
+#energy p{font-size:12px;line-height:1.4;margin:5px 0 9px}
+#energy table{width:100%;border-collapse:collapse;font-size:11px;line-height:1.3}
+#energy th,#energy td{padding:5px 7px;white-space:nowrap;vertical-align:middle}
+#energy th{font-size:10px;font-weight:650}
+#energy td{font-variant-numeric:tabular-nums}
+@media(max-width:700px){
+  #outText{font-size:10px;line-height:1.25;max-height:420px;padding:8px}
+  #energy table{font-size:10px}
+  #energy th,#energy td{padding:4px 5px}
+}
+
 </style></head><body>
 <h1>ORCA DOCKER Workbench</h1>
 <div class="card"><h2 lang="id">Apa itu ORCA DOCKER?</h2><h2 lang="en">What is ORCA DOCKER?</h2>
