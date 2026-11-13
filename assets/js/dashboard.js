@@ -146,7 +146,7 @@ function drawEnergyDiagram(){
  const slot=pw/ns.length,bw=Math.min(48,Math.max(24,slot*.23));
  ns.forEach((n,i)=>{const e=elec(MOL[n])||{},x=MOL[n].expOrb||{},cx=left+slot*(i+.5);
   const cardX=left+slot*i+6;g.fillStyle='rgba(128,128,128,.045)';g.beginPath();g.roundRect(cardX,top,Math.max(1,slot-12),ph,12);g.fill();g.strokeStyle='rgba(128,128,128,.22)';g.stroke();
-  const subW=Math.min(slot*.34,74),sep=Math.min(slot*.20,34),cxC=cx-sep,cxE=cx+sep;
+  const subW=Math.min(slot*.34,74),sep=Math.min(slot*.34,58),cxC=cx-sep,cxE=cx+sep;
   g.font='bold 12px system-ui';g.textAlign='center';g.textBaseline='bottom';g.fillStyle='#64748b';g.fillText('COMPUTED',cxC,top-12);g.fillText('EXPERIMENT',cxE,top-12);
   const draw=(obj,xx,dashed)=>{[['h',homo],['l',lumo]].forEach(([k,color])=>{const val=obj[k];if(!Number.isFinite(val))return;const y=Y(val);g.save();g.strokeStyle=color;g.lineWidth=10;g.lineCap='round';g.setLineDash(dashed?[8,5]:[]);g.beginPath();g.moveTo(xx-bw/2,y);g.lineTo(xx+bw/2,y);g.stroke();g.restore();g.fillStyle=color;g.font='bold 12px system-ui';g.textAlign='center';g.textBaseline=k==='h'?'bottom':'top';g.fillText(val.toFixed(2),xx,y+(k==='h'?-9:9))})};
   draw(e,cxC,false);draw(x,cxE,true);
