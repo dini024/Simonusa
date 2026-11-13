@@ -19,17 +19,17 @@ async function up(role,files){
    if(!nm){const candidates=names().filter(n=>!MOL[n][role]);if(candidates.length===1)nm=candidates[0]}
    if(!nm)nm='Molecule 1';
   }
-  if(!nm)nm=f.name.replace(/\\.[^.]+$/,'');
+  if(!nm)nm=f.name.replace(/\.[^.]+$/,'');
   const m=MOL[nm]||(MOL[nm]={});
   if(role==='out'){
    const t=await rd(f),o=parse(t,f.name);
    if(!o.ex&&!o.geom){const a=nums(t);if(a.length)o.ex=a.map(([w,x],i)=>({n:i+1,sym:'',E:1239.84/w,nm:w,f:x,tr:[]}))}
    Object.keys(o).forEach(k=>{if(o[k]!==undefined)m[k]=o[k]});
   }else if(role==='xyz'){
-   const L=(await rd(f)).trim().split(/\\r?\\n/),n=+L[0];
-   m.geom=L.slice(2,2+n).map(l=>{const p=l.trim().split(/\\s+/);return[p[0],+p[1],+p[2],+p[3]]});
+   const L=(await rd(f)).trim().split(/\r?\n/),n=+L[0];
+   m.geom=L.slice(2,2+n).map(l=>{const p=l.trim().split(/\s+/);return[p[0],+p[1],+p[2],+p[3]]});
   }else if(role==='ch'||role==='cl'){
-   const im=f.type.startsWith('image')||/\\.(png|jpe?g|webp)$/i.test(f.name);
+   const im=f.type.startsWith('image')||/\.(png|jpe?g|webp)$/i.test(f.name);
    m[role+(im?'i':'')]=await rd(f,im);
    m[role+'Name']=f.name;
    cur=nm;
