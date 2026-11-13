@@ -38,7 +38,7 @@ async function up(role,files){
    if(im){m[role+'i']=await rd(f,true);delete m[role]}else{m[role]=await rd(f,false);delete m[role+'i']}
    m[role+'Name']=f.name;
    cur=nm;
-  }else if(role==='ex')m.exp=nums(await rd(f));
+  }else if(role==='ex')m.expSpectrum=nums(await rd(f)).filter(a=>a[0]>0&&a[1]>=0).sort((a,b)=>a[0]-b[0]);
   else if(role==='jv')m.jv=nums(await rd(f));
  }
  render();
@@ -135,40 +135,44 @@ function rEl(){
 function drawEnergyDiagram(){
  const ns=names().filter(n=>{const e=elec(MOL[n]),x=MOL[n].expOrb||{};return(e&&(Number.isFinite(e.h)||Number.isFinite(e.l)))||Number.isFinite(x.h)||Number.isFinite(x.l)});
  const c=$('c_lad'),g=c.getContext('2d'),W=c.width,H=c.height;g.clearRect(0,0,W,H);
- const fg=getComputedStyle(document.body).color,homo='#e05a47',lumo='#3478d4';
+ const fg=getComputedStyle(document.body).color,homo='#d94f45',lumo='#2878cf';
  const vals=[];ns.forEach(n=>{const e=elec(MOL[n]),x=MOL[n].expOrb||{};[e&&e.h,e&&e.l,x.h,x.l].forEach(v=>{if(Number.isFinite(v))vals.push(v)})});
- if(!vals.length){g.fillStyle=fg;g.font='16px system-ui';g.textAlign='center';g.fillText('Enter computed or experimental HOMO/LUMO energies to display the diagram',W/2,H/2);return}
- const lo=Math.min(...vals)-.65,hi=Math.max(...vals)+.65,left=76,right=24,top=40,bottom=72,ph=H-top-bottom,pw=W-left-right,Y=v=>top+(hi-v)/(hi-lo||1)*ph;
- g.font='13px system-ui';g.textAlign='right';g.textBaseline='middle';g.fillStyle=fg;
- const raw=(hi-lo)/6,p=Math.pow(10,Math.floor(Math.log10(raw))),step=[1,2,5,10].map(z=>z*p).find(z=>z>=raw)||10*p;
- for(let v=Math.ceil(lo/step)*step;v<=hi;v+=step){const y=Y(v);g.strokeStyle='rgba(128,128,128,.2)';g.beginPath();g.moveTo(left,y);g.lineTo(W-right,y);g.stroke();g.fillStyle=fg;g.fillText(v.toFixed(1),left-10,y)}
- g.save();g.translate(18,H/2);g.rotate(-Math.PI/2);g.textAlign='center';g.font='14px system-ui';g.fillStyle=fg;g.fillText('Orbital energy (eV)',0,0);g.restore();
- const slot=pw/ns.length;
- ns.forEach((n,i)=>{const e=elec(MOL[n])||{},x=MOL[n].expOrb||{},cx=left+slot*(i+.5),dx=Math.min(20,slot*.16),bw=Math.min(36,slot*.25);
-  g.fillStyle='rgba(128,128,128,.045)';g.beginPath();g.roundRect(left+slot*i+4,top,Math.max(1,slot-8),ph,10);g.fill();g.strokeStyle='rgba(128,128,128,.18)';g.stroke();
-  const group=(obj,offset,dashed)=>{const h=obj.h,l=obj.l,xx=cx+offset;
-   if(Number.isFinite(h)){g.save();g.setLineDash(dashed?[6,4]:[]);g.strokeStyle=homo;g.lineWidth=7;g.lineCap='round';g.beginPath();g.moveTo(xx-bw/2,Y(h));g.lineTo(xx+bw/2,Y(h));g.stroke();g.restore();g.fillStyle=homo;g.font='11px system-ui';g.textAlign='center';g.textBaseline='bottom';g.fillText(h.toFixed(2),xx,Y(h)-7)}
-   if(Number.isFinite(l)){g.save();g.setLineDash(dashed?[6,4]:[]);g.strokeStyle=lumo;g.lineWidth=7;g.lineCap='round';g.beginPath();g.moveTo(xx-bw/2,Y(l));g.lineTo(xx+bw/2,Y(l));g.stroke();g.restore();g.fillStyle=lumo;g.font='11px system-ui';g.textAlign='center';g.textBaseline='top';g.fillText(l.toFixed(2),xx,Y(l)+7)}
-   if(Number.isFinite(h)&&Number.isFinite(l)){g.fillStyle=fg;g.font='10px system-ui';g.textAlign='center';g.textBaseline='middle';g.fillText('Eg '+(l-h).toFixed(2),xx,Math.max(top+12,Math.min(top+ph-12,(Y(h)+Y(l))/2)))}
-  };
-  group(e,-dx,false);group(x,dx,true);
-  g.fillStyle=fg;g.font='600 12px system-ui';g.textAlign='center';g.textBaseline='top';g.fillText(n,cx,H-bottom+18);
-  g.font='10px system-ui';g.fillStyle='rgba(128,128,128,.9)';g.fillText('solid | dashed',cx,H-bottom+36);
+ if(!vals.length){g.fillStyle=fg;g.font='18px system-ui';g.textAlign='center';g.fillText('Enter computed or experimental HOMO/LUMO energies',W/2,H/2);return}
+ const lo=Math.min(...vals)-.8,hi=Math.max(...vals)+.8,left=88,right=30,top=62,bottom=86,ph=H-top-bottom,pw=W-left-right,Y=v=>top+(hi-v)/(hi-lo||1)*ph;
+ g.font='14px system-ui';g.textAlign='right';g.textBaseline='middle';g.fillStyle=fg;
+ const raw=(hi-lo)/7,p=Math.pow(10,Math.floor(Math.log10(raw))),step=[1,2,5,10].map(z=>z*p).find(z=>z>=raw)||10*p;
+ for(let v=Math.ceil(lo/step)*step;v<=hi;v+=step){const y=Y(v);g.strokeStyle='rgba(128,128,128,.2)';g.lineWidth=1;g.beginPath();g.moveTo(left,y);g.lineTo(W-right,y);g.stroke();g.fillStyle=fg;g.fillText(v.toFixed(1),left-12,y)}
+ g.save();g.translate(20,H/2);g.rotate(-Math.PI/2);g.textAlign='center';g.font='15px system-ui';g.fillStyle=fg;g.fillText('Orbital energy (eV)',0,0);g.restore();
+ const slot=pw/ns.length,bw=Math.min(48,Math.max(24,slot*.23));
+ ns.forEach((n,i)=>{const e=elec(MOL[n])||{},x=MOL[n].expOrb||{},cx=left+slot*(i+.5);
+  const cardX=left+slot*i+6;g.fillStyle='rgba(128,128,128,.045)';g.beginPath();g.roundRect(cardX,top,Math.max(1,slot-12),ph,12);g.fill();g.strokeStyle='rgba(128,128,128,.22)';g.stroke();
+  const subW=Math.min(slot*.34,74),sep=Math.min(slot*.20,34),cxC=cx-sep,cxE=cx+sep;
+  g.font='bold 12px system-ui';g.textAlign='center';g.textBaseline='bottom';g.fillStyle='#64748b';g.fillText('COMPUTED',cxC,top-12);g.fillText('EXPERIMENT',cxE,top-12);
+  const draw=(obj,xx,dashed)=>{[['h',homo],['l',lumo]].forEach(([k,color])=>{const val=obj[k];if(!Number.isFinite(val))return;const y=Y(val);g.save();g.strokeStyle=color;g.lineWidth=10;g.lineCap='round';g.setLineDash(dashed?[8,5]:[]);g.beginPath();g.moveTo(xx-bw/2,y);g.lineTo(xx+bw/2,y);g.stroke();g.restore();g.fillStyle=color;g.font='bold 12px system-ui';g.textAlign='center';g.textBaseline=k==='h'?'bottom':'top';g.fillText(val.toFixed(2),xx,y+(k==='h'?-9:9))})};
+  draw(e,cxC,false);draw(x,cxE,true);
+  g.fillStyle=fg;g.font='bold 14px system-ui';g.textAlign='center';g.textBaseline='top';g.fillText(n,cx,H-bottom+22);
+  g.font='11px system-ui';g.fillStyle='#64748b';g.fillText('HOMO / LUMO',cx,H-bottom+44);
  });
 }
-// Optical spectra: Gaussian broadening of oscillator strengths to molar extinction coefficient.
+// Optical spectra: simulated molar extinction coefficient and direct experimental epsilon data.
 const sg=()=>Math.max(.001,Number($('sig').value)||.25),F8=8065.544;
 const conc=()=>Math.max(0,Number($('conc').value)||0),path=()=>Math.max(0,Number($('path').value)||0);
 const epsAt=(m,l)=>{const s=sg()*F8,v=1e7/l;return m.ex.reduce((a,e)=>a+1.3062974e8*e.f/s*Math.exp(-(((v-e.E*F8)/s)**2)),0)};
 const absorbanceAt=(m,l)=>epsAt(m,l)*conc()*path();
 function rOp(){
- const ns=names().filter(n=>MOL[n].ex),x=lin(250,900,326);$('sgv').textContent=sg().toFixed(2)+' eV';
+ const ns=names().filter(n=>MOL[n].ex),x=lin(250,900,651);$('sgv').textContent=sg().toFixed(2)+' eV';
  const curves=fn=>ns.map(n=>({n,x,y:x.map(l=>fn(MOL[n],l)),c:col(names().indexOf(n))}));
- if(ns.length){plot('c_sim',curves(epsAt),{xl:'Wavelength (nm)',yl:'ε (L mol⁻¹ cm⁻¹)',y0:0});plot('c_lhe',curves((m,l)=>1-Math.pow(10,-absorbanceAt(m,l))),{xl:'Wavelength (nm)',yl:'LHE',y0:0,y1:1})}
- else ['c_sim','c_lhe'].forEach(id=>$(id).getContext('2d').clearRect(0,0,760,300));
+ if(ns.length){plot('c_sim',curves(epsAt),{xl:'Wavelength (nm)',yl:'ε (L mol⁻¹ cm⁻¹)',y0:0})}
+ else{const g=$('c_sim').getContext('2d');g.clearRect(0,0,1200,520);g.fillStyle=getComputedStyle(document.body).color;g.font='18px system-ui';g.textAlign='center';g.fillText('Upload ORCA/Gaussian TD-DFT output to generate simulated ε(λ)',600,260)}
  const m=MOL[cur]||{},S=[];if(m.ex)S.push({n:'Simulated ε',x,y:x.map(l=>epsAt(m,l)),c:'#1a6fd4'});
- if(m.exp&&m.exp.length){const cl=conc()*path();if(cl>0)S.push({n:'Experimental ε',x:m.exp.map(a=>a[0]),y:m.exp.map(a=>a[1]/cl),c:'#d33',d:1})}
- if(S.length)plot('c_cmp',S,{xl:'Wavelength (nm)',yl:'ε (L mol⁻¹ cm⁻¹)',y0:0});else $('c_cmp').getContext('2d').clearRect(0,0,760,300);
+ if(m.expSpectrum&&m.expSpectrum.length)S.push({n:'Experimental ε',x:m.expSpectrum.map(a=>a[0]),y:m.expSpectrum.map(a=>a[1]),c:'#d33',d:1});
+ const status=$('exp-status'),statusEn=$('exp-status-en');
+ if(m.expSpectrum&&m.expSpectrum.length){status.textContent='Spektrum eksperimen berhasil dimuat untuk '+cur+'. Nilai ε digunakan langsung tanpa konversi.';statusEn.textContent='Experimental ε spectrum loaded for '+cur+'. Raw ε values are plotted directly.'}
+ else{status.textContent='Belum ada spektrum eksperimen untuk molekul terpilih. Unggah file dua kolom λ (nm), ε (M⁻¹ cm⁻¹).';statusEn.textContent='No experimental spectrum for the selected molecule. Upload a two-column λ (nm), ε (M⁻¹ cm⁻¹) file.'}
+ if(S.length>1)plot('c_cmp',S,{xl:'Wavelength (nm)',yl:'ε (L mol⁻¹ cm⁻¹)',y0:0});
+ else{const g=$('c_cmp').getContext('2d');g.clearRect(0,0,1200,520);g.fillStyle=getComputedStyle(document.body).color;g.font='18px system-ui';g.textAlign='center';g.fillText(S.length?'Upload experimental ε data to compare with the simulated spectrum':'Select a molecule with TD-DFT transitions, then upload experimental ε data',600,260)}
+ if(ns.length)plot('c_lhe',curves((m,l)=>1-Math.pow(10,-absorbanceAt(m,l))),{xl:'Wavelength (nm)',yl:'LHE',y0:0,y1:1});
+ else{const g=$('c_lhe').getContext('2d');g.clearRect(0,0,1200,520);g.fillStyle=getComputedStyle(document.body).color;g.font='18px system-ui';g.textAlign='center';g.fillText('LHE requires simulated transitions and concentration/path length',600,260)}
  $('tex').innerHTML='<tr><th>Molecule</th><th>State</th><th>λ (nm)</th><th>E (eV)</th><th>Oscillator strength (f)</th><th>ε at λ (L mol⁻¹ cm⁻¹)</th><th>LHE at λ</th><th>Transition contributions</th></tr>'+ns.map(n=>MOL[n].ex.slice(0,20).map(e=>{const eps=epsAt(MOL[n],e.nm),lhe=1-Math.pow(10,-eps*conc()*path());return`<tr><td>${esc(n)}</td><td>${e.n} ${e.sym||''}</td><td>${e.nm.toFixed(1)}</td><td>${e.E.toFixed(3)}</td><td>${e.f.toFixed(4)}</td><td>${eps.toFixed(1)}</td><td>${lhe.toFixed(3)}</td><td>${e.tr.join('; ')}</td></tr>`}).join('')).join('');
 }
 // PV
