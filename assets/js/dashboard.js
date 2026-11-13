@@ -126,37 +126,51 @@ function cube(id,m,k){
 function rEl(){
  const ns=names().filter(n=>elec(MOL[n])),m=MOL[cur]||{};
  cube('vh',m,'ch');cube('vl',m,'cl');$('isov').textContent=$('iso').value;
- const fmt=x=>Number(x).toFixed(3);
+ const fmt=x=>Number.isFinite(x)?x.toFixed(3):'—';
  $('tel').innerHTML='<tr><th>Molecule</th><th>HOMO (eV)</th><th>LUMO (eV)</th><th>Gap (eV)</th><th>IP (eV)</th><th>EA (eV)</th><th>χ (eV)</th><th>η (eV)</th><th>S (eV⁻¹)</th><th>ω (eV)</th></tr>'+ns.map(n=>{const e=elec(MOL[n]);return`<tr><td>${esc(n)}</td><td>${fmt(e.h)}</td><td>${fmt(e.l)}</td><td>${fmt(e.gap)}</td><td>${fmt(e.IP)}</td><td>${fmt(e.EA)}</td><td>${fmt(e.chi)}</td><td>${fmt(e.eta)}</td><td>${fmt(e.S)}</td><td>${fmt(e.om)}</td></tr>`}).join('');
+ $('tenergyexp').innerHTML='<tr><th>Molecule</th><th>Computed HOMO (eV)</th><th>Computed LUMO (eV)</th><th>Experimental HOMO (eV)</th><th>Experimental LUMO (eV)</th></tr>'+names().map(n=>{const e=elec(MOL[n]),x=MOL[n].expOrb||(MOL[n].expOrb={});return`<tr><td>${esc(n)}</td><td>${e?fmt(e.h):'—'}</td><td>${e?fmt(e.l):'—'}</td><td><input type="number" step="any" data-n="${esc(n)}" data-k="h" placeholder="eV" value="${Number.isFinite(x.h)?x.h:''}"></td><td><input type="number" step="any" data-n="${esc(n)}" data-k="l" placeholder="eV" value="${Number.isFinite(x.l)?x.l:''}"></td></tr>`}).join('');
+ $('tenergyexp').oninput=e=>{const t=e.target;if(!t.dataset.n)return;const n=t.dataset.n,k=t.dataset.k,v=t.value.trim()===''?null:Number(t.value);MOL[n].expOrb||(MOL[n].expOrb={});MOL[n].expOrb[k]=Number.isFinite(v)?v:null;drawEnergyDiagram()};
+ drawEnergyDiagram();
+}
+function drawEnergyDiagram(){
+ const ns=names().filter(n=>{const e=elec(MOL[n]),x=MOL[n].expOrb||{};return(e&&(Number.isFinite(e.h)||Number.isFinite(e.l)))||Number.isFinite(x.h)||Number.isFinite(x.l)});
  const c=$('c_lad'),g=c.getContext('2d'),W=c.width,H=c.height;g.clearRect(0,0,W,H);
  const fg=getComputedStyle(document.body).color,homo='#e05a47',lumo='#3478d4';
- if(!ns.length){g.fillStyle=fg;g.font='16px system-ui';g.textAlign='center';g.fillText('Upload molecular orbital energies to display the diagram',W/2,H/2);return}
- const E=ns.map(n=>({name:n,...elec(MOL[n])}));
- const minRaw=Math.min(...E.map(e=>e.h)),maxRaw=Math.max(...E.map(e=>e.l)),span=Math.max(1.5,maxRaw-minRaw);
- const lo=minRaw-Math.max(.45,span*.12),hi=maxRaw+Math.max(.45,span*.12),left=76,right=24,top=32,bottom=78,plotH=H-top-bottom,plotW=W-left-right,Y=v=>top+(hi-v)/(hi-lo)*plotH;
+ const vals=[];ns.forEach(n=>{const e=elec(MOL[n]),x=MOL[n].expOrb||{};[e&&e.h,e&&e.l,x.h,x.l].forEach(v=>{if(Number.isFinite(v))vals.push(v)})});
+ if(!vals.length){g.fillStyle=fg;g.font='16px system-ui';g.textAlign='center';g.fillText('Enter computed or experimental HOMO/LUMO energies to display the diagram',W/2,H/2);return}
+ const lo=Math.min(...vals)-.65,hi=Math.max(...vals)+.65,left=76,right=24,top=40,bottom=72,ph=H-top-bottom,pw=W-left-right,Y=v=>top+(hi-v)/(hi-lo||1)*ph;
  g.font='13px system-ui';g.textAlign='right';g.textBaseline='middle';g.fillStyle=fg;
- const raw=(hi-lo)/6,pow=Math.pow(10,Math.floor(Math.log10(raw))),step=[1,2,5,10].map(x=>x*pow).find(x=>x>=raw)||10*pow;
- for(let v=Math.ceil(lo/step)*step;v<=hi+1e-8;v+=step){const y=Y(v);g.strokeStyle='rgba(128,128,128,.20)';g.lineWidth=1;g.beginPath();g.moveTo(left,y);g.lineTo(W-right,y);g.stroke();g.fillStyle=fg;g.fillText(v.toFixed(1),left-12,y)}
+ const raw=(hi-lo)/6,p=Math.pow(10,Math.floor(Math.log10(raw))),step=[1,2,5,10].map(z=>z*p).find(z=>z>=raw)||10*p;
+ for(let v=Math.ceil(lo/step)*step;v<=hi;v+=step){const y=Y(v);g.strokeStyle='rgba(128,128,128,.2)';g.beginPath();g.moveTo(left,y);g.lineTo(W-right,y);g.stroke();g.fillStyle=fg;g.fillText(v.toFixed(1),left-10,y)}
  g.save();g.translate(18,H/2);g.rotate(-Math.PI/2);g.textAlign='center';g.font='14px system-ui';g.fillStyle=fg;g.fillText('Orbital energy (eV)',0,0);g.restore();
- const slot=plotW/E.length,barW=Math.min(64,Math.max(24,slot*.34));
- E.forEach((e,i)=>{const cx=left+slot*(i+.5),yh=Y(e.h),yl=Y(e.l),cardW=Math.min(slot-12,150),cardX=cx-cardW/2;
-  g.fillStyle='rgba(128,128,128,.055)';g.beginPath();g.roundRect(cardX,top+4,cardW,plotH-8,12);g.fill();g.strokeStyle='rgba(128,128,128,.18)';g.lineWidth=1;g.stroke();
-  g.setLineDash([3,4]);g.strokeStyle='rgba(128,128,128,.55)';g.beginPath();g.moveTo(cx,yh);g.lineTo(cx,yl);g.stroke();g.setLineDash([]);
-  g.lineCap='round';g.lineWidth=9;g.strokeStyle=homo;g.beginPath();g.moveTo(cx-barW/2,yh);g.lineTo(cx+barW/2,yh);g.stroke();g.strokeStyle=lumo;g.beginPath();g.moveTo(cx-barW/2,yl);g.lineTo(cx+barW/2,yl);g.stroke();
-  g.fillStyle=homo;g.font='600 12px system-ui';g.textAlign='center';g.textBaseline='bottom';g.fillText(e.h.toFixed(2),cx,yh-9);
-  g.fillStyle=lumo;g.textBaseline='top';g.fillText(e.l.toFixed(2),cx,yl+9);
-  g.fillStyle=fg;g.font='600 12px system-ui';g.textBaseline='middle';g.fillText('Eg '+e.gap.toFixed(2),cx,Math.max(top+15,Math.min(top+plotH-15,(yh+yl)/2)));
-  g.font='600 13px system-ui';g.textBaseline='top';g.fillText(e.name,cx,H-bottom+22);
+ const slot=pw/ns.length;
+ ns.forEach((n,i)=>{const e=elec(MOL[n])||{},x=MOL[n].expOrb||{},cx=left+slot*(i+.5),dx=Math.min(20,slot*.16),bw=Math.min(36,slot*.25);
+  g.fillStyle='rgba(128,128,128,.045)';g.beginPath();g.roundRect(left+slot*i+4,top,Math.max(1,slot-8),ph,10);g.fill();g.strokeStyle='rgba(128,128,128,.18)';g.stroke();
+  const group=(obj,offset,dashed)=>{const h=obj.h,l=obj.l,xx=cx+offset;
+   if(Number.isFinite(h)){g.save();g.setLineDash(dashed?[6,4]:[]);g.strokeStyle=homo;g.lineWidth=7;g.lineCap='round';g.beginPath();g.moveTo(xx-bw/2,Y(h));g.lineTo(xx+bw/2,Y(h));g.stroke();g.restore();g.fillStyle=homo;g.font='11px system-ui';g.textAlign='center';g.textBaseline='bottom';g.fillText(h.toFixed(2),xx,Y(h)-7)}
+   if(Number.isFinite(l)){g.save();g.setLineDash(dashed?[6,4]:[]);g.strokeStyle=lumo;g.lineWidth=7;g.lineCap='round';g.beginPath();g.moveTo(xx-bw/2,Y(l));g.lineTo(xx+bw/2,Y(l));g.stroke();g.restore();g.fillStyle=lumo;g.font='11px system-ui';g.textAlign='center';g.textBaseline='top';g.fillText(l.toFixed(2),xx,Y(l)+7)}
+   if(Number.isFinite(h)&&Number.isFinite(l)){g.fillStyle=fg;g.font='10px system-ui';g.textAlign='center';g.textBaseline='middle';g.fillText('Eg '+(l-h).toFixed(2),xx,Math.max(top+12,Math.min(top+ph-12,(Y(h)+Y(l))/2)))}
+  };
+  group(e,-dx,false);group(x,dx,true);
+  g.fillStyle=fg;g.font='600 12px system-ui';g.textAlign='center';g.textBaseline='top';g.fillText(n,cx,H-bottom+18);
+  g.font='10px system-ui';g.fillStyle='rgba(128,128,128,.9)';g.fillText('solid | dashed',cx,H-bottom+36);
  });
- g.textAlign='left';g.textBaseline='alphabetic';g.font='11px system-ui';g.fillStyle=fg;g.fillText('Higher energy',left,18);
 }
-// optik
-const sg=()=>+$('sig').value,F8=8065.544,epsAt=(m,l)=>{const s=sg()*F8,v=1e7/l;return m.ex.reduce((a,e)=>a+1.3062974e8*e.f/s*Math.exp(-(((v-e.E*F8)/s)**2)),0)},Fat=(m,l)=>m.ex.reduce((a,e)=>a+e.f*Math.exp(-(((1239.84/l-e.E)/sg())**2)),0);
-function rOp(){const ns=names().filter(n=>MOL[n].ex),x=lin(250,900,326),nz=$('nm').checked;$('sgv').textContent=sg().toFixed(2);const curve=(m,f)=>{const y=x.map(l=>f(m,l)),mx=nz?Math.max(...y)||1:1;return y.map(v=>v/mx)};
- if(ns.length){plot('c_sim',ns.map((n,i)=>({n,x,y:curve(MOL[n],epsAt),c:col(names().indexOf(n))})),{xl:'λ (nm)',yl:nz?'ε ternormalisasi':'ε (M⁻¹cm⁻¹)',y0:0});plot('c_lhe',ns.map(n=>({n,x,y:x.map(l=>1-Math.pow(10,-Fat(MOL[n],l))),c:col(names().indexOf(n))})),{xl:'λ (nm)',yl:'LHE = 1−10^(−f)',y0:0,y1:1})}else{['c_sim','c_lhe'].forEach(i=>$(i).getContext('2d').clearRect(0,0,760,300))}
- const m=MOL[cur]||{},S=[];if(m.ex)S.push({n:'Simulasi '+cur,x,y:curve(m,epsAt)});if(m.exp&&m.exp.length){const mx=Math.max(...m.exp.map(a=>a[1]))||1;S.push({n:'Eksperimen',x:m.exp.map(a=>a[0]),y:m.exp.map(a=>a[1]/mx),c:'#d33',d:1})}
- if(S.length)plot('c_cmp',S,{xl:'λ (nm)',yl:'absorbansi relatif',y0:0});else $('c_cmp').getContext('2d').clearRect(0,0,760,300);
- $('tex').innerHTML='<tr><th>Molekul</th><th>State</th><th>λ (nm)</th><th>E (eV)</th><th>f</th><th>LHE</th><th>Transisi (koef.)</th><th>Sim. λ<sub>maks</sub></th><th>Eksp. λ<sub>maks</sub></th></tr>'+ns.map(n=>{const M=MOL[n],mx=M.ex.reduce((a,b)=>b.f>a.f?b:a),ev=M.exp&&M.exp.length?M.exp.reduce((a,b)=>b[1]>a[1]?b:a)[0].toFixed(0):'—';return M.ex.slice(0,20).map(e=>`<tr${e===mx?' style="font-weight:700"':''}><td>${esc(n)}</td><td>${e.n} ${e.sym||''}</td><td>${e.nm.toFixed(1)}</td><td>${e.E.toFixed(3)}</td><td>${e.f.toFixed(4)}</td><td>${(1-Math.pow(10,-e.f)).toFixed(3)}</td><td>${e.tr.join('; ')}</td><td>${e===mx?mx.nm.toFixed(1):''}</td><td>${e===mx?ev:''}</td></tr>`).join('')}).join('')}
+// Optical spectra: Gaussian broadening of oscillator strengths to molar extinction coefficient.
+const sg=()=>Math.max(.001,Number($('sig').value)||.25),F8=8065.544;
+const conc=()=>Math.max(0,Number($('conc').value)||0),path=()=>Math.max(0,Number($('path').value)||0);
+const epsAt=(m,l)=>{const s=sg()*F8,v=1e7/l;return m.ex.reduce((a,e)=>a+1.3062974e8*e.f/s*Math.exp(-(((v-e.E*F8)/s)**2)),0)};
+const absorbanceAt=(m,l)=>epsAt(m,l)*conc()*path();
+function rOp(){
+ const ns=names().filter(n=>MOL[n].ex),x=lin(250,900,326);$('sgv').textContent=sg().toFixed(2)+' eV';
+ const curves=fn=>ns.map(n=>({n,x,y:x.map(l=>fn(MOL[n],l)),c:col(names().indexOf(n))}));
+ if(ns.length){plot('c_sim',curves(epsAt),{xl:'Wavelength (nm)',yl:'ε (L mol⁻¹ cm⁻¹)',y0:0});plot('c_lhe',curves((m,l)=>1-Math.pow(10,-absorbanceAt(m,l))),{xl:'Wavelength (nm)',yl:'LHE',y0:0,y1:1})}
+ else ['c_sim','c_lhe'].forEach(id=>$(id).getContext('2d').clearRect(0,0,760,300));
+ const m=MOL[cur]||{},S=[];if(m.ex)S.push({n:'Simulated ε',x,y:x.map(l=>epsAt(m,l)),c:'#1a6fd4'});
+ if(m.exp&&m.exp.length){const cl=conc()*path();if(cl>0)S.push({n:'Experimental ε',x:m.exp.map(a=>a[0]),y:m.exp.map(a=>a[1]/cl),c:'#d33',d:1})}
+ if(S.length)plot('c_cmp',S,{xl:'Wavelength (nm)',yl:'ε (L mol⁻¹ cm⁻¹)',y0:0});else $('c_cmp').getContext('2d').clearRect(0,0,760,300);
+ $('tex').innerHTML='<tr><th>Molecule</th><th>State</th><th>λ (nm)</th><th>E (eV)</th><th>Oscillator strength (f)</th><th>ε at λ (L mol⁻¹ cm⁻¹)</th><th>LHE at λ</th><th>Transition contributions</th></tr>'+ns.map(n=>MOL[n].ex.slice(0,20).map(e=>{const eps=epsAt(MOL[n],e.nm),lhe=1-Math.pow(10,-eps*conc()*path());return`<tr><td>${esc(n)}</td><td>${e.n} ${e.sym||''}</td><td>${e.nm.toFixed(1)}</td><td>${e.E.toFixed(3)}</td><td>${e.f.toFixed(4)}</td><td>${eps.toFixed(1)}</td><td>${lhe.toFixed(3)}</td><td>${e.tr.join('; ')}</td></tr>`}).join('')).join('');
+}
 // PV
 function fitX(ff){const F=x=>{let b=0;for(let i=1;i<200;i++){const u=i/200;b=Math.max(b,u*(1-(Math.exp(x*u)-1)/(Math.exp(x)-1)))}return b};let a=.01,b=80;for(let i=0;i<50;i++){const m=(a+b)/2;F(m)<ff?a=m:b=m}return(a+b)/2}
 const jvSim=p=>{if(!(p.voc>0&&p.jsc>0&&p.ff>.25&&p.ff<1))return null;const x=fitX(p.ff),V=lin(0,p.voc,60);return{V,J:V.map(v=>p.jsc*(1-(Math.exp(x*v/p.voc)-1)/(Math.exp(x)-1)))}};
@@ -169,4 +183,4 @@ function drawPV(){const ns=names(),Pin=+$('pin').value||100;const S=[],E=[],rows
  const cl=id=>$(id).getContext('2d').clearRect(0,0,760,300);S.length?plot('c_jvs',S,{xl:'V',yl:'J (mA/cm²)',y0:0}):cl('c_jvs');E.length?plot('c_jve',E,{xl:'V',yl:'J (mA/cm²)'}):cl('c_jve');
  $('tpv').innerHTML='<tr><th rowspan="2">Molekul</th><th colspan="4">Simulasi / prediksi</th><th colspan="4">Eksperimen</th></tr><tr><th>Voc</th><th>Jsc</th><th>FF</th><th>PCE (%)</th><th>Voc</th><th>Jsc</th><th>FF</th><th>PCE (%)</th></tr>'+rows.join('')}
 function csv(id,fn){const r=[...$(id).rows].map(r=>[...r.cells].map(c=>'"'+c.textContent.replace(/"/g,'""')+'"').join(','));const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([r.join('\n')]));a.download=fn;a.click()}
-['ms','sig','nm','iso','pin'].forEach(i=>$(i).oninput=()=>{rStr();rEl();rOp();drawPV()});render();
+['ms','sig','conc','path','iso','pin'].forEach(i=>$(i).oninput=()=>{rStr();rEl();rOp();drawPV()});render();
