@@ -37,6 +37,16 @@
   #energy th,#energy td{padding:4px 5px}
 }
 
+
+/* Force compact typography in the Parsed energy and output panel */
+section:has(>#outText)>h3{font-size:12px!important;line-height:1.2!important;margin:4px 0 6px!important;font-weight:600!important}
+#outText,pre#outText,#outText *{font-size:8px!important;line-height:1.15!important;font-weight:400!important;letter-spacing:0!important}
+#energy h3{font-size:12px!important;line-height:1.2!important;margin:5px 0 4px!important}
+#energy p{font-size:9px!important;line-height:1.2!important;margin:4px 0 6px!important}
+#energy table,#energy table *{font-size:9px!important;line-height:1.15!important}
+#energy th,#energy td{padding:3px 5px!important}
+@media(max-width:700px){#outText,pre#outText{font-size:7px!important;line-height:1.1!important}}
+
 </style></head><body>
 <h1>ORCA DOCKER Workbench</h1>
 <div class="card"><h2 lang="id">Apa itu ORCA DOCKER?</h2><h2 lang="en">What is ORCA DOCKER?</h2>
@@ -60,7 +70,7 @@ END
 </textarea>
 </div>
 <div class="card"><h2>2 · Preview input structures</h2><div class="grid2"><section><h3>Host</h3><div id="hostView" class="viewer"></div><small id="hostInfo" class="muted">Upload a host XYZ file.</small></section><section><h3>Guest</h3><div id="guestView" class="viewer"></div><small id="guestInfo" class="muted">Upload a guest XYZ file.</small></section></div></div>
-<div class="card"><h2>3 · Jobs and backend results</h2><button onclick="list()">Refresh jobs</button><table id="jobs"></table><div class="field"><label for="jobFiles">Job file</label><select id="jobFiles"></select><button onclick="loadSelected()">Load selected</button><label for="localOut">Local .out</label><input id="localOut" type="file" accept=".out,.log,.txt"><label for="localXYZ">Local docking XYZ</label><input id="localXYZ" type="file" accept=".xyz"></div><div id="energy" aria-live="polite"></div><div class="grid2"><section><h3>Docked structures / poses</h3><div id="resultView" class="viewer"></div><label>Frame <input id="frame" type="range" min="0" max="0" value="0"></label><small id="poseInfo" class="muted"></small></section><section><h3>Parsed energy and output</h3><pre id="outText">Upload an ORCA .out file or load one from a completed job.</pre></section></div>
+<div class="card"><h2>3 · Jobs and backend results</h2><button onclick="list()">Refresh jobs</button><table id="jobs"></table><div class="field"><label for="jobFiles">Job file</label><select id="jobFiles"></select><button onclick="loadSelected()">Load selected</button><label for="localOut">Local .out</label><input id="localOut" type="file" accept=".out,.log,.txt"><label for="localXYZ">Local docking XYZ</label><input id="localXYZ" type="file" accept=".xyz"></div><div id="energy" aria-live="polite"></div><div class="grid2"><section><h3>Docked structures / poses</h3><div id="resultView" class="viewer"></div><label>Frame <input id="frame" type="range" min="0" max="0" value="0"></label><small id="poseInfo" class="muted"></small></section><section><h3>Parsed energy and output</h3><pre id="outText" style="font:8px/1.15 ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace!important;white-space:pre;max-height:420px;overflow:auto;padding:8px">Upload an ORCA .out file or load one from a completed job.</pre></section></div>
 </div>
 <script>
 const $=id=>document.getElementById(id),esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));let hostText='',guestText='',hostName='host.xyz',guestName='guest.xyz',jobId='',viewer=null,frameCount=1,poseEnergies=[],poseViewerId='resultView';
