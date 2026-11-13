@@ -1,28 +1,28 @@
 <!DOCTYPE html>
-<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width,initial-scale=1" name="viewport"/><title>Literatur | CompChem Lab</title><link href="assets/css/style.css" rel="stylesheet"/><style>.tag{font-size:12px;padding:1px 6px;border-radius:8px;background:#1a9a4a;color:#fff}.tag.u{background:#b8860b}</style><link href="assets/img/favicon.png" rel="icon"/><link href="assets/img/apple-touch-icon.png" rel="apple-touch-icon"/><script src="assets/js/shell.js"></script></head><body>
-<h1 lang="id">Literatur Pendukung</h1><h1 lang="en">Supporting Literature</h1>
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width,initial-scale=1" name="viewport"/><title>Literatur | CompChem Lab</title><link href="assets/css/style.css" rel="stylesheet"/><link href="assets/img/favicon.png" rel="icon"/><link href="assets/img/apple-touch-icon.png" rel="apple-touch-icon"/><script src="assets/js/shell.js"></script></head><body>
+<h1>Supporting Literature</h1>
 <nav><a href="index.html">Dashboard</a><a href="course.html">Course</a><a href="molecular-builder.html">Molecular Builder</a><a href="input-builder.html">Input Builder</a><a href="results-analyzer.html">Results</a><a href="orca-docker.html">ORCA Docker</a></nav>
-<div class="card"><div class="topic-filter"><label lang="id" for="t">Topik:</label><label lang="en" for="t">Topic:</label><select id="t"><option data-en="All topics" value="">Semua topik</option></select></div>
-<table id="tb"><tr><th lang="id">Topik</th><th lang="en">Topic</th><th lang="id">Referensi</th><th lang="en">Reference</th><th lang="id">Status</th><th lang="en">Status</th></tr></table></div>
+<div class="card"><div class="topic-filter"><label for="t">Topic:</label><select id="t"><option value="">All topics</option></select></div>
+<table id="tb"><tr><th>Topic</th><th>Reference</th></tr></table></div>
 <script>
 const R=[
-['Teori kuantum','Schrödinger, E. An Undulatory Theory of the Mechanics of Atoms and Molecules. Phys. Rev. 28, 1049 (1926).','10.1103/PhysRev.28.1049',1],
+['Quantum Theory','Schrödinger, E. An Undulatory Theory of the Mechanics of Atoms and Molecules. Phys. Rev. 28, 1049 (1926).','10.1103/PhysRev.28.1049',1],
 ['Hartree–Fock','Hartree, D. R. The Wave Mechanics of an Atom with a Non-Coulomb Central Field. Proc. Cambridge Philos. Soc. 24, 89 (1928).','10.1017/S0305004100011919',1],
 ['Hartree–Fock','Fock, V. Näherungsmethode zur Lösung des quantenmechanischen Mehrkörperproblems. Z. Phys. 61, 126 (1930).','10.1007/BF01340294',1],
-['Korelasi elektron','Møller, C.; Plesset, M. S. Note on an Approximation Treatment for Many-Electron Systems. Phys. Rev. 46, 618 (1934).','10.1103/PhysRev.46.618',1],
-['Korelasi elektron','Čížek, J. On the Use of the Cluster Expansion and the Technique of Diagrams in Calculations of Correlation Effects in Atoms and Molecules. Adv. Chem. Phys. 14, 35 (1969).','10.1002/9780470143599.ch2',1],
-['Basis set','Dunning, T. H. Gaussian basis sets for use in correlated molecular calculations. J. Chem. Phys. 90, 1007 (1989).','10.1063/1.456153',1],
-['Dinamika molekul','Alder, B. J.; Wainwright, T. E. Studies in Molecular Dynamics. I. General Method. J. Chem. Phys. 31, 459 (1959).','10.1063/1.1730376',1],
-['Monte Carlo','Metropolis, N. et al. Equation of State Calculations by Fast Computing Machines. J. Chem. Phys. 21, 1087 (1953).','10.1063/1.1699114',1],
-['Teori DFT','Hohenberg, P.; Kohn, W. Inhomogeneous Electron Gas. Phys. Rev. 136, B864 (1964).','10.1103/PhysRev.136.B864',1],
-['Teori DFT','Kohn, W.; Sham, L. J. Self-Consistent Equations Including Exchange and Correlation Effects. Phys. Rev. 140, A1133 (1965).','10.1103/PhysRev.140.A1133',1],
-['TD-DFT','Runge, E.; Gross, E. K. U. Density-Functional Theory for Time-Dependent Systems. Phys. Rev. Lett. 52, 997 (1984).','10.1103/PhysRevLett.52.997',1],
-['TD-DFT','Laurent, A. D.; Jacquemin, D. TD-DFT benchmarks: a review. Int. J. Quantum Chem. 113, 2019 (2013).','10.1002/qua.24438',1],
+['Electron Correlation','Møller, C.; Plesset, M. S. Note on an Approximation Treatment for Many-Electron Systems. Phys. Rev. 46, 618 (1934).','10.1103/PhysRev.46.618',1],
+['Electron Correlation','Čížek, J. On the Use of the Cluster Expansion and the Technique of Diagrams in Calculations of Correlation Effects in Atoms and Molecules. Adv. Chem. Phys. 14, 35 (1969).','10.1002/9780470143599.ch2',1],
+['Basis Sets','Dunning, T. H. Gaussian basis sets for use in correlated molecular calculations. J. Chem. Phys. 90, 1007 (1989).','10.1063/1.456153',1],
+['Molecular Dynamics','Alder, B. J.; Wainwright, T. E. Studies in Molecular Dynamics. I. General Method. J. Chem. Phys. 31, 459 (1959).','10.1063/1.1730376',1],
+['Monte Carlo Methods','Metropolis, N. et al. Equation of State Calculations by Fast Computing Machines. J. Chem. Phys. 21, 1087 (1953).','10.1063/1.1699114',1],
+['Density Functional Theory (DFT)','Hohenberg, P.; Kohn, W. Inhomogeneous Electron Gas. Phys. Rev. 136, B864 (1964).','10.1103/PhysRev.136.B864',1],
+['Density Functional Theory (DFT)','Kohn, W.; Sham, L. J. Self-Consistent Equations Including Exchange and Correlation Effects. Phys. Rev. 140, A1133 (1965).','10.1103/PhysRev.140.A1133',1],
+['Time-Dependent DFT (TD-DFT)','Runge, E.; Gross, E. K. U. Density-Functional Theory for Time-Dependent Systems. Phys. Rev. Lett. 52, 997 (1984).','10.1103/PhysRevLett.52.997',1],
+['Time-Dependent DFT (TD-DFT)','Laurent, A. D.; Jacquemin, D. TD-DFT benchmarks: a review. Int. J. Quantum Chem. 113, 2019 (2013).','10.1002/qua.24438',1],
 ['ORCA','Neese, F. The ORCA program system. WIREs Comput. Mol. Sci. 12, e1606 (2022).','10.1002/wcms.1606',1],
-['ORCA DOCKER','FACCTs. ORCA 6.0 Tutorials: Automated docking (DOCKER). Dokumentasi resmi ORCA 6.0.','',1,'https://www.faccts.de/docs/orca/6.0/tutorials/react/docker.html']
+['ORCA DOCKER','FACCTs. ORCA 6.0 Tutorials: Automated docking (DOCKER). Official ORCA 6.0 documentation.','',1,'https://www.faccts.de/docs/orca/6.0/tutorials/react/docker.html']
 ];
 const T=[...new Set(R.map(r=>r[0]))];document.getElementById('t').innerHTML+=T.map(t=>`<option value="${t}">${t}</option>`).join('');
 const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;');
-function draw(){const t=document.getElementById('t').value;document.getElementById('tb').innerHTML='<tr><th>Topik</th><th>Referensi</th><th>Status</th></tr>'+R.filter(r=>!t||r[0]==t).map(r=>`<tr><td>${r[0]}</td><td>${esc(r[1])} <a href="${r[4]||'https://doi.org/'+r[2]}" target="_blank" rel="noopener">${r[4]?'arXiv':'DOI'}</a></td><td><span class="tag ${r[3]?'':'u'}">${r[3]?'terverifikasi':'cek ulang'}</span></td></tr>`).join('')}
+function draw(){const t=document.getElementById('t').value;document.getElementById('tb').innerHTML='<tr><th>Topic</th><th>Reference</th></tr>'+R.filter(r=>!t||r[0]==t).map(r=>`<tr><td>${r[0]}</td><td>${esc(r[1])} <a href="${r[4]||'https://doi.org/'+r[2]}" target="_blank" rel="noopener">${r[4]?'Documentation':'DOI'}</a></td></tr>`).join('')}
 document.getElementById('t').onchange=draw;draw();
 </script></body></html>
