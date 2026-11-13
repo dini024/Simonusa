@@ -3,11 +3,41 @@ const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',
 const nums=t=>t.split(/\r?\n/).map(l=>l.trim().split(/[\s,;]+/).map(Number)).filter(a=>a.length>=2&&isFinite(a[0])&&isFinite(a[1]));
 const rd=(f,b)=>new Promise(r=>{const x=new FileReader();x.onload=()=>r(x.result);b?x.readAsDataURL(f):x.readAsText(f)});
 let cur='';
-async function up(role,files){const n0=$('mn').value.trim();for(const f of files){const nm=n0||f.name.replace(/\.[^.]+$/,''),m=MOL[nm]||(MOL[nm]={});
- if(role=='out'){const t=await rd(f);const o=parse(t,f.name);if(!o.ex&&!o.geom){const a=nums(t);if(a.length)o.ex=a.map(([w,x],i)=>({n:i+1,sym:'',E:1239.84/w,nm:w,f:x,tr:[]}))}Object.keys(o).forEach(k=>{if(o[k]!==undefined)m[k]=o[k]})}
- else if(role=='xyz'){const L=(await rd(f)).trim().split(/\r?\n/),n=+L[0];m.geom=L.slice(2,2+n).map(l=>{const p=l.trim().split(/\s+/);return[p[0],+p[1],+p[2],+p[3]]})}
- else if(role=='ch'||role=='cl'){const im=f.type.startsWith('image');m[role+(im?'i':'')]=await rd(f,im)}
- else if(role=='ex')m.exp=nums(await rd(f));else if(role=='jv')m.jv=nums(await rd(f))}render()}
+function orbitalMoleculeName(filename){
+ const base=filename.replace(/\\.(cube|cub|png|jpe?g|webp)$/i,'')
+  .replace(/(?:^|[ _.-])(HOMO|LUMO|HIGHEST[_ -]?OCCUPIED|LOWEST[_ -]?UNOCCUPIED|FRONTIER[_ -]?ORBITAL)(?=$|[ _.-])/ig,' ')
+  .replace(/[ _.-]+/g,' ').trim();
+ return base;
+}
+async function up(role,files){
+ const entered=$('mn').value.trim();
+ for(const f of files){
+  let nm=entered;
+  if(!nm&&(role==='ch'||role==='cl')){
+   nm=orbitalMoleculeName(f.name);
+   if(!nm&&cur&&MOL[cur]&&!MOL[cur][role])nm=cur;
+   if(!nm){const candidates=names().filter(n=>!MOL[n][role]);if(candidates.length===1)nm=candidates[0]}
+   if(!nm)nm='Molecule 1';
+  }
+  if(!nm)nm=f.name.replace(/\\.[^.]+$/,'');
+  const m=MOL[nm]||(MOL[nm]={});
+  if(role==='out'){
+   const t=await rd(f),o=parse(t,f.name);
+   if(!o.ex&&!o.geom){const a=nums(t);if(a.length)o.ex=a.map(([w,x],i)=>({n:i+1,sym:'',E:1239.84/w,nm:w,f:x,tr:[]}))}
+   Object.keys(o).forEach(k=>{if(o[k]!==undefined)m[k]=o[k]});
+  }else if(role==='xyz'){
+   const L=(await rd(f)).trim().split(/\\r?\\n/),n=+L[0];
+   m.geom=L.slice(2,2+n).map(l=>{const p=l.trim().split(/\\s+/);return[p[0],+p[1],+p[2],+p[3]]});
+  }else if(role==='ch'||role==='cl'){
+   const im=f.type.startsWith('image')||/\\.(png|jpe?g|webp)$/i.test(f.name);
+   m[role+(im?'i':'')]=await rd(f,im);
+   m[role+'Name']=f.name;
+   cur=nm;
+  }else if(role==='ex')m.exp=nums(await rd(f));
+  else if(role==='jv')m.jv=nums(await rd(f));
+ }
+ render();
+}
 document.querySelectorAll('.up').forEach(i=>i.onchange=async e=>{await up(i.dataset.r,e.target.files);i.value=''});
 function render(){const ns=names();if(!ns.includes(cur))cur=ns[0]||'';$('sel').innerHTML=ns.map(n=>`<option ${n==cur?'selected':''}>${esc(n)}</option>`).join('');
  $('chips').innerHTML=ns.map((n,i)=>`<span style="color:${col(i)}">● ${esc(n)}</span> <button data-d="${esc(n)}">×</button> `).join('')||'Belum ada molekul. Isi nama lalu unggah berkas.';rGal();rStr();rFreq();rEl();rOp();rPVin();drawPV()}
@@ -26,24 +56,66 @@ function rFreq(){$('tfr').innerHTML='<tr><th>Molekul</th><th>Program</th><th>Mod
 // elektrokimia
 function elec(m){if(!m.oc||!m.vi)return null;const h=m.oc[m.oc.length-1],l=m.vi[0],IP=-h,EA=-l,chi=(IP+EA)/2,eta=(IP-EA)/2;return{h,l,gap:l-h,IP,EA,chi,eta,om:chi*chi/(2*eta),S:1/eta}}
 const orbitalViewers={homo:null,lumo:null};
+const BOHR_TO_ANG=0.529177210903;
+const CUBE_ELEMENTS=['','H','He','Li','Be','B','C','N','O','F','Ne','Na','Mg','Al','Si','P','S','Cl','Ar','K','Ca','Sc','Ti','V','Cr','Mn','Fe','Co','Ni','Cu','Zn','Ga','Ge','As','Se','Br','Kr','Rb','Sr','Y','Zr','Nb','Mo','Tc','Ru','Rh','Pd','Ag','Cd','In','Sn','Sb','Te','I','Xe','Cs','Ba','La','Ce','Pr','Nd','Pm','Sm','Eu','Gd','Tb','Dy','Ho','Er','Tm','Yb','Lu','Hf','Ta','W','Re','Os','Ir','Pt','Au','Hg','Tl','Pb','Bi','Po','At','Rn'];
+function cubeAtomsXYZ(data){
+ const L=data.replace(/\\r/g,'').split('\\n');
+ if(L.length<7)return '';
+ const h=L[2].trim().split(/\\s+/),nat=Math.abs(parseInt(h[0],10));
+ if(!Number.isFinite(nat)||nat<1||L.length<6+nat)return '';
+ const grid=L.slice(3,6).map(x=>x.trim().split(/\\s+/));
+ const bohr=Number(grid[0][0])>0;
+ const factor=bohr?BOHR_TO_ANG:1;
+ const out=[String(nat),'Atoms read from Gaussian cube'];
+ for(let i=0;i<nat;i++){
+  const p=L[6+i].trim().split(/\\s+/),z=Math.abs(parseInt(p[0],10));
+  const el=CUBE_ELEMENTS[z]||'C';
+  const xyz=p.slice(2,5).map(Number);
+  if(xyz.length!==3||xyz.some(v=>!Number.isFinite(v)))return '';
+  out.push(el+' '+xyz.map(v=>(v*factor).toFixed(7)).join(' '));
+ }
+ return out.join('\\n');
+}
+function geometryXYZ(m,cubeText){
+ if(Array.isArray(m.geom)&&m.geom.length){
+  return [String(m.geom.length),'Uploaded molecular geometry',...m.geom.map(a=>a[0]+' '+a.slice(1,4).join(' '))].join('\\n');
+ }
+ return cubeAtomsXYZ(cubeText);
+}
 function cube(id,m,k){
- const el=$(id);el.innerHTML='';
- el.style.position='relative';el.style.display='block';el.style.width='100%';el.style.height='320px';el.style.minHeight='280px';el.style.overflow='hidden';
+ const el=$(id),label=k==='ch'?'HOMO':'LUMO';
+ el.innerHTML='';
+ el.style.cssText='position:relative;display:block;width:100%;height:330px;min-height:280px;overflow:hidden;background:#fff;border-radius:8px';
  const image=m[k+'i'];
- if(image){const im=document.createElement('img');im.src=image;im.alt=k==='ch'?'HOMO orbital':'LUMO orbital';im.style.cssText='display:block;width:100%;height:100%;object-fit:contain;background:white';el.appendChild(im);return}
+ if(image){
+  const im=document.createElement('img');im.src=image;im.alt=label+' molecular orbital';
+  im.style.cssText='display:block;width:100%;height:100%;object-fit:contain;background:#fff';
+  el.appendChild(im);return;
+ }
  const data=m[k];
- if(!data){el.innerHTML='<div style="padding:18px;color:#777">Upload '+(k==='ch'?'HOMO':'LUMO')+' .cube file to display this orbital.</div>';return}
+ if(!data){el.innerHTML='<div style="height:100%;display:grid;place-items:center;text-align:center;padding:14px;box-sizing:border-box;color:#667085">Upload '+label+' .cube file.<br><small>Use the same molecule name for HOMO and LUMO.</small></div>';return;}
  try{
-  const v=$3Dmol.createViewer(el,{backgroundColor:'white',antialias:true});
-  if(!v)throw new Error('3Dmol viewer could not be created');
-  const volume=new $3Dmol.VolumeData(data,'cube');
-  const iso=+$('iso').value;
-  v.addIsosurface(volume,{isoval:iso,color:'#d62728',opacity:.82});
-  v.addIsosurface(volume,{isoval:-iso,color:'#2468c8',opacity:.82});
-  v.zoomTo();v.resize();v.render();
-  orbitalViewers[id==='vh'?'homo':'lumo']=v;
-  requestAnimationFrame(()=>{v.resize();v.render()});
- }catch(err){el.innerHTML='<div style="padding:12px;color:#b33">Could not render cube: '+esc(String(err.message||err))+'</div>'}
+  if(!/^\\s*[^\\n]*\\n[^\\n]*\\n\\s*-?\\d+\\s/.test(data))throw new Error('The file does not look like a Gaussian cube file.');
+  const viewer=$3Dmol.createViewer(el,{backgroundColor:0xffffff,antialias:true});
+  if(!viewer)throw new Error('WebGL viewer could not be created.');
+  const geom=geometryXYZ(m,data);
+  if(geom){
+   viewer.addModel(geom,'xyz');
+   viewer.setStyle({}, {stick:{radius:0.13,colorscheme:'Jmol'},sphere:{scale:0.18,colorscheme:'Jmol'}});
+  }
+  const iso=Math.max(0.0005,Number($('iso').value)||0.02);
+  const vol=new $3Dmol.VolumeData(data,'cube');
+  // Correct cube orbital rendering: two signed isosurfaces, matching 3Dmol's documented API.
+  viewer.addIsosurface(vol,{isoval:iso,color:'#2457C5',alpha:0.88,smoothness:10});
+  viewer.addIsosurface(vol,{isoval:-iso,color:'#D83B3B',alpha:0.88,smoothness:10});
+  viewer.zoomTo();
+  viewer.resize();
+  viewer.render();
+  orbitalViewers[k==='ch'?'homo':'lumo']=viewer;
+  requestAnimationFrame(()=>{viewer.resize();viewer.render()});
+ }catch(err){
+  el.innerHTML='<div style="padding:12px;color:#b42318;font-size:13px">Cannot render '+label+': '+esc(err.message||String(err))+'</div>';
+ }
 }
 function rEl(){const ns=names().filter(n=>elec(MOL[n])),m=MOL[cur]||{};cube('vh',m,'ch');cube('vl',m,'cl');$('isov').textContent=$('iso').value;const cb=+$('cb').value,rx=+$('rx').value;
  $('tel').innerHTML='<tr><th>Molekul</th><th>HOMO</th><th>LUMO</th><th>E<sub>gap</sub></th><th>IP</th><th>EA</th><th>χ</th><th>η</th><th>S (eV⁻¹)</th><th>ω</th><th>ΔG<sub>inj</sub>=LUMO−E<sub>CB</sub></th><th>ΔG<sub>reg</sub>=E<sub>redox</sub>−HOMO</th></tr>'+ns.map(n=>{const e=elec(MOL[n]),f=x=>x.toFixed(3);return`<tr><td>${esc(n)}</td><td>${f(e.h)}</td><td>${f(e.l)}</td><td>${f(e.gap)}</td><td>${f(e.IP)}</td><td>${f(e.EA)}</td><td>${f(e.chi)}</td><td>${f(e.eta)}</td><td>${f(e.S)}</td><td>${f(e.om)}</td><td>${f(e.l-cb)}</td><td>${f(rx-e.h)}</td></tr>`}).join('');
