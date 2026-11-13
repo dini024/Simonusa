@@ -30,7 +30,7 @@ async function up(role,files){
    m.geom=L.slice(2,2+n).map(l=>{const p=l.trim().split(/\s+/);return[p[0],+p[1],+p[2],+p[3]]});
   }else if(role==='ch'||role==='cl'){
    const im=f.type.startsWith('image')||/\.(png|jpe?g|webp)$/i.test(f.name);
-   m[role+(im?'i':'')]=await rd(f,im);
+   if(im){m[role+'i']=await rd(f,true);delete m[role]}else{m[role]=await rd(f,false);delete m[role+'i']}
    m[role+'Name']=f.name;
    cur=nm;
   }else if(role==='ex')m.exp=nums(await rd(f));
