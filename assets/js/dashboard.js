@@ -25,8 +25,26 @@ function rStr(){const ms=$('ms').value.split('\n').map(l=>l.trim().split(/\s+/))
 function rFreq(){$('tfr').innerHTML='<tr><th>Molekul</th><th>Program</th><th>Mode</th><th>Imajiner</th><th>3 terendah (cm⁻¹)</th><th>Status</th></tr>'+names().filter(n=>MOL[n].freq).map(n=>{const F=MOL[n].freq,im=F.filter(x=>x<0);return`<tr><td>${esc(n)}</td><td>${MOL[n].prog||''}</td><td>${F.length}</td><td>${im.length}</td><td>${[...F].sort((a,b)=>a-b).slice(0,3).map(x=>x.toFixed(1)).join(', ')}</td><td class="${im.length?'bad':'ok'}">${im.length?'bukan minimum':'minimum sejati'}</td></tr>`}).join('')}
 // elektrokimia
 function elec(m){if(!m.oc||!m.vi)return null;const h=m.oc[m.oc.length-1],l=m.vi[0],IP=-h,EA=-l,chi=(IP+EA)/2,eta=(IP-EA)/2;return{h,l,gap:l-h,IP,EA,chi,eta,om:chi*chi/(2*eta),S:1/eta}}
-function cube(id,m,k){const el=$(id);el.innerHTML='';if(m[k+'i']){el.innerHTML='<img src="'+m[k+'i']+'" style="max-width:100%;max-height:100%">';return}if(!m[k]){el.textContent='Belum ada cube/gambar.';return}
- const v=$3Dmol.createViewer(el,{backgroundColor:'white'}),vd=new $3Dmol.VolumeData(m[k],'cube'),iso=+$('iso').value;v.addModel(m[k],'cube');v.setStyle({},{stick:{radius:.12}});v.addIsosurface(vd,{isoval:iso,color:'#d33',opacity:.85});v.addIsosurface(vd,{isoval:-iso,color:'#1a6fd4',opacity:.85});v.zoomTo();v.render()}
+const orbitalViewers={homo:null,lumo:null};
+function cube(id,m,k){
+ const el=$(id);el.innerHTML='';
+ el.style.position='relative';el.style.display='block';el.style.width='100%';el.style.height='320px';el.style.minHeight='280px';el.style.overflow='hidden';
+ const image=m[k+'i'];
+ if(image){const im=document.createElement('img');im.src=image;im.alt=k==='ch'?'HOMO orbital':'LUMO orbital';im.style.cssText='display:block;width:100%;height:100%;object-fit:contain;background:white';el.appendChild(im);return}
+ const data=m[k];
+ if(!data){el.innerHTML='<div style="padding:18px;color:#777">Upload '+(k==='ch'?'HOMO':'LUMO')+' .cube file to display this orbital.</div>';return}
+ try{
+  const v=$3Dmol.createViewer(el,{backgroundColor:'white',antialias:true});
+  if(!v)throw new Error('3Dmol viewer could not be created');
+  const volume=new $3Dmol.VolumeData(data,'cube');
+  const iso=+$('iso').value;
+  v.addIsosurface(volume,{isoval:iso,color:'#d62728',opacity:.82});
+  v.addIsosurface(volume,{isoval:-iso,color:'#2468c8',opacity:.82});
+  v.zoomTo();v.resize();v.render();
+  orbitalViewers[id==='vh'?'homo':'lumo']=v;
+  requestAnimationFrame(()=>{v.resize();v.render()});
+ }catch(err){el.innerHTML='<div style="padding:12px;color:#b33">Could not render cube: '+esc(String(err.message||err))+'</div>'}
+}
 function rEl(){const ns=names().filter(n=>elec(MOL[n])),m=MOL[cur]||{};cube('vh',m,'ch');cube('vl',m,'cl');$('isov').textContent=$('iso').value;const cb=+$('cb').value,rx=+$('rx').value;
  $('tel').innerHTML='<tr><th>Molekul</th><th>HOMO</th><th>LUMO</th><th>E<sub>gap</sub></th><th>IP</th><th>EA</th><th>χ</th><th>η</th><th>S (eV⁻¹)</th><th>ω</th><th>ΔG<sub>inj</sub>=LUMO−E<sub>CB</sub></th><th>ΔG<sub>reg</sub>=E<sub>redox</sub>−HOMO</th></tr>'+ns.map(n=>{const e=elec(MOL[n]),f=x=>x.toFixed(3);return`<tr><td>${esc(n)}</td><td>${f(e.h)}</td><td>${f(e.l)}</td><td>${f(e.gap)}</td><td>${f(e.IP)}</td><td>${f(e.EA)}</td><td>${f(e.chi)}</td><td>${f(e.eta)}</td><td>${f(e.S)}</td><td>${f(e.om)}</td><td>${f(e.l-cb)}</td><td>${f(rx-e.h)}</td></tr>`}).join('');
  const c=$('c_lad'),g=c.getContext('2d'),fg=getComputedStyle(document.body).color;g.clearRect(0,0,760,360);g.font='12px system-ui';if(!ns.length)return;const E=ns.map(n=>elec(MOL[n])),lo=Math.min(...E.map(e=>e.h),cb,rx)-.6,hi=Math.max(...E.map(e=>e.l),cb,rx)+.6,Y=v=>340-(v-lo)/(hi-lo)*320;
