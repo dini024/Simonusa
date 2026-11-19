@@ -159,19 +159,31 @@ const sg=()=>Math.max(.001,Number($('sig').value)||.25),F8=8065.544;
 const conc=()=>Math.max(0,Number($('conc').value)||0),path=()=>Math.max(0,Number($('path').value)||0);
 const epsAt=(m,l)=>{const s=sg()*F8,v=1e7/l;return m.ex.reduce((a,e)=>a+1.3062974e8*e.f/s*Math.exp(-(((v-e.E*F8)/s)**2)),0)};
 const absorbanceAt=(m,l)=>epsAt(m,l)*conc()*path();
+function axisValue(id){const el=$(id),v=el?el.value.trim():'';return v===''?null:Number(v)}
+function spectrumAxis(key){
+ const xmin=axisValue('ax-xmin'),xmax=axisValue('ax-xmax'),xstep=axisValue('ax-xstep');
+ const ymin=axisValue('ax-'+key+'-ymin'),ymax=axisValue('ax-'+key+'-ymax'),ystep=axisValue('ax-'+key+'-ystep');
+ const x0=Number.isFinite(xmin)?xmin:200,x1=Number.isFinite(xmax)&&xmax>x0?xmax:800;
+ const o={x0,x1,xl:'Wavelength (nm)',yl:key==='lhe'?'LHE':'ε (L mol⁻¹ cm⁻¹)'};
+ if(Number.isFinite(xstep)&&xstep>0)o.xStep=xstep;
+ if(Number.isFinite(ymin))o.y0=ymin;
+ if(Number.isFinite(ymax)&&(!Number.isFinite(ymin)||ymax>ymin))o.y1=ymax;
+ if(Number.isFinite(ystep)&&ystep>0)o.yStep=ystep;
+ return o;
+}
 function rOp(){
- const ns=names().filter(n=>MOL[n].ex),x=lin(250,900,651);$('sgv').textContent=sg().toFixed(2)+' eV';
+ const ns=names().filter(n=>MOL[n].ex),ax=spectrumAxis('sim'),x=lin(ax.x0,ax.x1,601);$('sgv').textContent=sg().toFixed(2)+' eV';
  const curves=fn=>ns.map(n=>({n,x,y:x.map(l=>fn(MOL[n],l)),c:col(names().indexOf(n))}));
- if(ns.length){plot('c_sim',curves(epsAt),{xl:'Wavelength (nm)',yl:'ε (L mol⁻¹ cm⁻¹)',y0:0})}
+ if(ns.length)plot('c_sim',curves(epsAt),{...ax});
  else{const g=$('c_sim').getContext('2d');g.clearRect(0,0,1200,520);g.fillStyle=getComputedStyle(document.body).color;g.font='18px system-ui';g.textAlign='center';g.fillText('Upload ORCA/Gaussian TD-DFT output to generate simulated ε(λ)',600,260)}
  const m=MOL[cur]||{},S=[];if(m.ex)S.push({n:'Simulated ε',x,y:x.map(l=>epsAt(m,l)),c:'#1a6fd4'});
  if(m.expSpectrum&&m.expSpectrum.length)S.push({n:'Experimental ε',x:m.expSpectrum.map(a=>a[0]),y:m.expSpectrum.map(a=>a[1]),c:'#d33',d:1});
  const status=$('exp-status'),statusEn=$('exp-status-en');
  if(m.expSpectrum&&m.expSpectrum.length){status.textContent='Spektrum eksperimen berhasil dimuat untuk '+cur+'. Nilai ε digunakan langsung tanpa konversi.';statusEn.textContent='Experimental ε spectrum loaded for '+cur+'. Raw ε values are plotted directly.'}
  else{status.textContent='Belum ada spektrum eksperimen untuk molekul terpilih. Unggah file dua kolom λ (nm), ε (M⁻¹ cm⁻¹).';statusEn.textContent='No experimental spectrum for the selected molecule. Upload a two-column λ (nm), ε (M⁻¹ cm⁻¹) file.'}
- if(S.length>1)plot('c_cmp',S,{xl:'Wavelength (nm)',yl:'ε (L mol⁻¹ cm⁻¹)',y0:0});
+ if(S.length>1)plot('c_cmp',S,{...spectrumAxis('cmp')});
  else{const g=$('c_cmp').getContext('2d');g.clearRect(0,0,1200,520);g.fillStyle=getComputedStyle(document.body).color;g.font='18px system-ui';g.textAlign='center';g.fillText(S.length?'Upload experimental ε data to compare with the simulated spectrum':'Select a molecule with TD-DFT transitions, then upload experimental ε data',600,260)}
- if(ns.length)plot('c_lhe',curves((m,l)=>1-Math.pow(10,-absorbanceAt(m,l))),{xl:'Wavelength (nm)',yl:'LHE',y0:0,y1:1});
+ if(ns.length)plot('c_lhe',curves((m,l)=>1-Math.pow(10,-absorbanceAt(m,l))),{...spectrumAxis('lhe')});
  else{const g=$('c_lhe').getContext('2d');g.clearRect(0,0,1200,520);g.fillStyle=getComputedStyle(document.body).color;g.font='18px system-ui';g.textAlign='center';g.fillText('LHE requires simulated transitions and concentration/path length',600,260)}
  $('tex').innerHTML='<tr><th>Molecule</th><th>State</th><th>λ (nm)</th><th>E (eV)</th><th>Oscillator strength (f)</th><th>ε at λ (L mol⁻¹ cm⁻¹)</th><th>LHE at λ</th><th>Transition contributions</th></tr>'+ns.map(n=>MOL[n].ex.slice(0,20).map(e=>{const eps=epsAt(MOL[n],e.nm),lhe=1-Math.pow(10,-eps*conc()*path());return`<tr><td>${esc(n)}</td><td>${e.n} ${e.sym||''}</td><td>${e.nm.toFixed(1)}</td><td>${e.E.toFixed(3)}</td><td>${e.f.toFixed(4)}</td><td>${eps.toFixed(1)}</td><td>${lhe.toFixed(3)}</td><td>${e.tr.join('; ')}</td></tr>`}).join('')).join('');
 }
@@ -188,3 +200,5 @@ function drawPV(){const ns=names(),Pin=+$('pin').value||100;const S=[],E=[],rows
  $('tpv').innerHTML='<tr><th rowspan="2">Molekul</th><th colspan="4">Simulasi / prediksi</th><th colspan="4">Eksperimen</th></tr><tr><th>Voc</th><th>Jsc</th><th>FF</th><th>PCE (%)</th><th>Voc</th><th>Jsc</th><th>FF</th><th>PCE (%)</th></tr>'+rows.join('')}
 function csv(id,fn){const r=[...$(id).rows].map(r=>[...r.cells].map(c=>'"'+c.textContent.replace(/"/g,'""')+'"').join(','));const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([r.join('\n')]));a.download=fn;a.click()}
 ['ms','sig','conc','path','iso','pin'].forEach(i=>$(i).oninput=()=>{rStr();rEl();rOp();drawPV()});render();
+
+['ax-xmin','ax-xmax','ax-xstep','ax-sim-ymin','ax-sim-ymax','ax-sim-ystep','ax-cmp-ymin','ax-cmp-ymax','ax-cmp-ystep','ax-lhe-ymin','ax-lhe-ymax','ax-lhe-ystep'].forEach(id=>{const e=$(id);if(e)e.addEventListener('input',rOp)});
